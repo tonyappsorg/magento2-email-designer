@@ -1,0 +1,70 @@
+<?php
+/** @var \Tonyapps\EmailDesigner\Block\Adminhtml\Designs $block */
+/** @var \Magento\Framework\Escaper $escaper */
+$designs = $block->getDesigns();
+?>
+<div class="ta-designs">
+    <form class="ta-designs-new" method="get" action="<?= $escaper->escapeUrl($block->getEditUrl()) ?>">
+        <h2 class="ta-designs-title"><?= $escaper->escapeHtml(__('New design')) ?></h2>
+        <div class="ta-designs-fields">
+            <label>
+                <span><?= $escaper->escapeHtml(__('Email')) ?></span>
+                <select name="base" class="admin__control-select" required>
+                    <option value=""><?= $escaper->escapeHtml(__('Choose the email this design is for')) ?></option>
+                    <?php foreach ($block->getEmailOptions() as $group => $options): ?>
+                        <optgroup label="<?= $escaper->escapeHtmlAttr($group) ?>">
+                            <?php foreach ($options as $code => $label): ?>
+                                <option value="<?= $escaper->escapeHtmlAttr($code) ?>"><?= $escaper->escapeHtml($label) ?></option>
+                            <?php endforeach; ?>
+                        </optgroup>
+                    <?php endforeach; ?>
+                </select>
+            </label>
+            <label>
+                <span><?= $escaper->escapeHtml(__('Design name')) ?></span>
+                <input type="text" name="name" class="admin__control-text" maxlength="150" required
+                       placeholder="<?= $escaper->escapeHtmlAttr(__('e.g. Order confirmation — autumn')) ?>"/>
+            </label>
+            <button type="submit" class="action-primary"><?= $escaper->escapeHtml(__('Open the designer')) ?></button>
+        </div>
+        <p class="ta-designs-note"><?= $escaper->escapeHtml(__('A design is saved as an ordinary email template. To send it, choose it in that email\'s template setting under Stores › Configuration, as with any custom template.')) ?></p>
+    </form>
+
+    <?php if (!$designs): ?>
+        <p class="ta-designs-empty"><?= $escaper->escapeHtml(__('No designs yet.')) ?></p>
+    <?php else: ?>
+        <table class="data-grid ta-designs-grid">
+            <thead>
+            <tr>
+                <th class="data-grid-th"><?= $escaper->escapeHtml(__('Design')) ?></th>
+                <th class="data-grid-th"><?= $escaper->escapeHtml(__('Email')) ?></th>
+                <th class="data-grid-th"><?= $escaper->escapeHtml(__('Used in settings')) ?></th>
+                <th class="data-grid-th"><?= $escaper->escapeHtml(__('Last saved')) ?></th>
+                <th class="data-grid-th"></th>
+            </tr>
+            </thead>
+            <tbody>
+            <?php foreach ($designs as $design): ?>
+                <tr>
+                    <td>
+                        <strong><?= $escaper->escapeHtml($design['template_code']) ?></strong><br>
+                        <small><?= $escaper->escapeHtml($design['template_subject']) ?></small>
+                    </td>
+                    <td><?= $escaper->escapeHtml($block->getEmailLabel((string)$design['base_template_code'])) ?></td>
+                    <td>
+                        <?php if (!$design['used_in']): ?>
+                            <span class="ta-designs-unused"><?= $escaper->escapeHtml(__('Not used yet')) ?></span>
+                        <?php else: ?>
+                            <?php foreach ($design['used_in'] as $setting): ?>
+                                <div><?= $escaper->escapeHtml($block->describeSetting($setting)) ?></div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </td>
+                    <td><?= $escaper->escapeHtml($block->formatDate($design['updated_at'], \IntlDateFormatter::MEDIUM, true)) ?></td>
+                    <td><a class="action-default" href="<?= $escaper->escapeUrl($block->getEditUrl((int)$design['design_id'])) ?>"><?= $escaper->escapeHtml(__('Edit')) ?></a></td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+    <?php endif; ?>
+</div>

@@ -1,0 +1,38 @@
+{
+    "tonyapps_email_design": {
+        "column": {
+            "design_id": true,
+            "template_id": true,
+            "base_template_code": true,
+            "project_data": true,
+            "mjml": true,
+            "created_at": true,
+            "updated_at": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "TONYAPPS_EMAIL_DESIGN_TEMPLATE_ID": true,
+            "TONYAPPS_EMAIL_DESIGN_TEMPLATE_ID_EMAIL_TEMPLATE_TEMPLATE_ID": true
+        }
+    },
+    "tonyapps_email_design_version": {
+        "column": {
+            "version_id": true,
+            "design_id": true,
+            "project_data": true,
+            "mjml": true,
+            "html": true,
+            "subject": true,
+            "admin_user_id": true,
+            "created_at": true
+        },
+        "index": {
+            "TONYAPPS_EMAIL_DESIGN_VERSION_DESIGN_ID": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "FK_184AA8807E4EBA965B9BA2DE75AEFF0E": true,
+            "TONYAPPS_EMAIL_DESIGN_VERSION_ADMIN_USER_ID_ADMIN_USER_USER_ID": true
+        }
+    }
+}

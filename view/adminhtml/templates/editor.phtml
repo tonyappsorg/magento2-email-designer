@@ -1,0 +1,25 @@
+<?php
+/** @var \Tonyapps\EmailDesigner\Block\Adminhtml\Editor $block */
+/** @var \Magento\Framework\Escaper $escaper */
+?>
+<div class="ta-designer" data-mage-init='{"Tonyapps_EmailDesigner/js/designer": <?= $escaper->escapeHtmlAttr($block->getConfigJson()) ?>}'>
+    <div class="ta-designer-bar">
+        <label class="ta-designer-field">
+            <span><?= $escaper->escapeHtml(__('Design name')) ?></span>
+            <input type="text" class="admin__control-text" data-role="name" maxlength="150"/>
+        </label>
+        <label class="ta-designer-field ta-designer-subject">
+            <span><?= $escaper->escapeHtml(__('Subject')) ?></span>
+            <input type="text" class="admin__control-text" data-role="subject" maxlength="200"/>
+        </label>
+        <div class="ta-designer-actions">
+            <a class="action-default" data-role="back" href="#"><?= $escaper->escapeHtml(__('Back')) ?></a>
+            <select class="admin__control-select" data-role="versions" title="<?= $escaper->escapeHtmlAttr(__('Saved versions')) ?>"></select>
+            <button type="button" class="action-default" data-role="preview"><?= $escaper->escapeHtml(__('Preview')) ?></button>
+            <button type="button" class="action-default" data-role="send-test"><?= $escaper->escapeHtml(__('Send test')) ?></button>
+            <button type="button" class="action-primary" data-role="save"><?= $escaper->escapeHtml(__('Save')) ?></button>
+        </div>
+    </div>
+    <p class="ta-designer-for" data-role="for"></p>
+    <div class="ta-designer-canvas" data-role="canvas"></div>
+</div>
