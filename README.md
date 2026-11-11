@@ -91,7 +91,9 @@ from the visual design, and the design itself (the GrapesJS project) is kept nex
   - the cascade when the template is deleted in core;
   - which settings use a design;
   - preview and test send through core;
-  - the admin pages, AJAX actions and ACL.
+  - the admin pages, AJAX actions and ACL;
+  - end to end, a design picked in ReviewReminder's and AbandonedCart's template setting is what their cron sends
+    (skipped when the module is not installed).
 - JS: `node Test/Js/directives.test.js [path/to/node_modules/mjml-browser]`. With the optional path it also compiles through real MJML.
 
 ## Out of scope
