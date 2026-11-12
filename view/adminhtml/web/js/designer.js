@@ -12,7 +12,8 @@ define([
 ], function ($, _, $t, grapesjs, grapesjsMjml, directives, alert, confirm, prompt, modal) {
     'use strict';
 
-    var mjmlPlugin = grapesjsMjml.default || grapesjsMjml;
+    var mjmlPlugin = grapesjsMjml.default || grapesjsMjml,
+        BLOCK_TYPE = 'ta-block';
 
     function post(url, data) {
         return $.ajax({
@@ -63,6 +64,59 @@ define([
         });
     }
 
+    /**
+     * A Magento block: one box in the canvas, a directive in the email. MJML passes mj-raw through as is;
+     * inside a column it must be a table row, like the rows MJML renders around other content.
+     */
+    function addBlockType(editor) {
+        editor.Components.addType(BLOCK_TYPE, {
+            extend: 'mj-raw',
+            isComponent: function () {
+                return false;
+            },
+            model: {
+                defaults: {
+                    name: $t('Magento block'),
+                    draggable: function (component, target) {
+                        return target.get('type') === 'mj-column';
+                    },
+                    droppable: false,
+                    editable: false,
+                    stylable: false,
+                    taLabel: '',
+                    taDirective: ''
+                },
+                toHTML: function () {
+                    return '<mj-raw><tr><td style="padding:10px 25px;font-size:14px;line-height:1.6;color:#333333;'
+                        + 'font-family:Helvetica, Arial, sans-serif;">' + this.get('taDirective') + '</td></tr></mj-raw>';
+                }
+            },
+            view: {
+                tagName: 'tr',
+                attributes: {style: 'pointer-events: all; display: table; width: 100%'},
+                init: function () {},
+                render: function () {
+                    this.updateAttributes();
+                    this.el.innerHTML = '<td style="padding:10px 25px"><div style="border:1px dashed #9f9f9f;'
+                        + 'padding:14px;text-align:center;color:#666;font:13px Helvetica, Arial, sans-serif;">'
+                        + _.escape(this.model.get('taLabel')) + '</div></td>';
+                    return this;
+                }
+            }
+        });
+    }
+
+    function addEmailBlocks(editor, config) {
+        _.each(config.blocks || [], function (block) {
+            editor.BlockManager.add('ta-block-' + block.id, {
+                label: block.label,
+                category: $t('This email'),
+                media: '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M3 4h18v4H3zm0 6h18v4H3zm0 6h18v4H3z"/></svg>',
+                content: {type: BLOCK_TYPE, name: block.label, taLabel: block.label, taDirective: block.directive}
+            });
+        });
+    }
+
     function addVariableAction(editor, variables) {
         editor.RichTextEditor.add('ta-variable', {
             icon: variableSelect(variables),
@@ -98,7 +152,7 @@ define([
             telemetry: false,
             storageManager: false,
             fromElement: false,
-            plugins: [mjmlPlugin]
+            plugins: [mjmlPlugin, addBlockType]
         });
         if (config.project) {
             editor.loadProjectData(config.project);
@@ -106,6 +160,7 @@ define([
             editor.setComponents(config.starter);
         }
         addMagentoBlocks(editor, config);
+        addEmailBlocks(editor, config);
         addVariableAction(editor, config.variables);
 
         editor.on('update', function () {

@@ -20,7 +20,8 @@ class Renderer
         private readonly TemplateFactory $templateFactory,
         private readonly TemplateVariables $templateVariables,
         private readonly EmailConfig $emailConfig,
-        private readonly TransportBuilder $transportBuilder
+        private readonly TransportBuilder $transportBuilder,
+        private readonly BlockPool $blockPool
     ) {
     }
 
@@ -28,7 +29,7 @@ class Renderer
     public function render(string $html, string $subject, string $baseCode, int $storeId): array
     {
         $template = $this->templateFactory->create();
-        $template->setTemplateText($html)
+        $template->setTemplateText($this->withPlaceholders($html))
             ->setTemplateSubject($subject)
             ->setTemplateType(TemplateTypesInterface::TYPE_HTML)
             ->setDesignConfig(['area' => $this->getArea($baseCode), 'store' => $storeId]);
@@ -42,6 +43,20 @@ class Renderer
         } catch (\Throwable $exception) {
             throw new LocalizedException(__('The design could not be rendered: %1', $exception->getMessage()), $exception);
         }
+    }
+
+    /**
+     * {{layout}} blocks (order items and the like) load the real order, quote or shipment by ID, which sample
+     * data does not have, so the preview shows a labelled box in their place.
+     */
+    private function withPlaceholders(string $html): string
+    {
+        return (string)preg_replace_callback('/\{\{layout\b[^}]*\}\}/', function (array $match): string {
+            $label = $this->blockPool->getLabel($match[0]) ?? (string)__('Magento block');
+            return '<div style="border:1px dashed #b3b3b3;padding:16px;text-align:center;color:#777777;'
+                . 'font-family:Helvetica,Arial,sans-serif;font-size:13px">'
+                . htmlspecialchars((string)__('%1 (shown with real data in the email)', $label)) . '</div>';
+        }, $html);
     }
 
     /** Sends the saved template of a design with sample data. */

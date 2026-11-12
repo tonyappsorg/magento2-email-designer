@@ -139,6 +139,22 @@ class DesignFlowTest extends TestCase
         self::assertSame('designer@example.com', $message->getTo()[0]->getEmail());
     }
 
+    public function testPreviewAndTestSendWorkWithAnOrderItemsBlock(): void
+    {
+        $html = '<html><body><p>Order #{{var order.increment_id}}</p><table><tbody><tr><td>'
+            . '{{layout handle="sales_email_order_items" order_id=$order_id area="frontend"}}</td></tr></tbody></table></body></html>';
+        $renderer = Bootstrap::getObjectManager()->get(Renderer::class);
+
+        $preview = $renderer->render($html, 'Order', self::BASE, 1)['html'];
+        self::assertStringContainsString('Order items (shown with real data in the email)', $preview);
+
+        $designId = $this->designs->save(null, 'Order — items', self::BASE, 'Order', '{"pages":[]}', '<mjml/>', $html, null);
+        $transport = Bootstrap::getObjectManager()->get(TransportBuilderMock::class);
+        Bootstrap::getObjectManager()->create(Renderer::class, ['transportBuilder' => $transport])
+            ->sendTest((int)$this->designs->get($designId)['template_id'], self::BASE, 'designer@example.com', 1);
+        self::assertStringContainsString('Order #[', $transport->getSentMessage()->getBodyText());
+    }
+
     private function save(?int $designId, string $name, string $subject): int
     {
         return $this->designs->save($designId, $name, self::BASE, $subject, '{"pages":[]}', '<mjml/>', self::HTML, null);

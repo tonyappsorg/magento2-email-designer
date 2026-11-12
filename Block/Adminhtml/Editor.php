@@ -9,6 +9,7 @@ use Magento\Backend\Model\Auth\Session;
 use Magento\Email\Model\Template\Config as EmailConfig;
 use Magento\Email\Model\TemplateFactory;
 use Magento\Framework\Serialize\Serializer\Json;
+use Tonyapps\EmailDesigner\Model\BlockPool;
 use Tonyapps\EmailDesigner\Model\DesignRepository;
 use Tonyapps\EmailDesigner\Model\StarterLayout;
 use Tonyapps\EmailDesigner\Model\TemplateVariables;
@@ -26,6 +27,7 @@ class Editor extends Template
         private readonly TemplateFactory $templateFactory,
         private readonly Session $authSession,
         private readonly Json $json,
+        private readonly BlockPool $blockPool,
         array $data = []
     ) {
         parent::__construct($context, $data);
@@ -62,6 +64,7 @@ class Editor extends Template
             'starter' => StarterLayout::mjml($logoUrl),
             'logoUrl' => $logoUrl,
             'variables' => $this->templateVariables->getOptions($baseCode),
+            'blocks' => $this->blockPool->getFor($baseCode),
             'adminEmail' => (string)$this->authSession->getUser()?->getEmail(),
             'urls' => [
                 'save' => $this->getUrl('*/*/save'),

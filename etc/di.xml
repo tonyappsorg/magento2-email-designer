@@ -1,0 +1,126 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <!-- Blocks for core's sales emails. Modules add blocks for their own emails the same way. -->
+    <type name="Tonyapps\EmailDesigner\Model\BlockPool">
+        <arguments>
+            <argument name="blocks" xsi:type="array">
+                <item name="sales_order_items" xsi:type="array">
+                    <item name="label" xsi:type="string" translate="true">Order items</item>
+                    <item name="templates" xsi:type="array">
+                        <item name="0" xsi:type="string">sales_email_order_template</item>
+                        <item name="1" xsi:type="string">sales_email_order_guest_template</item>
+                    </item>
+                    <item name="directive" xsi:type="string">{{layout handle="sales_email_order_items" order_id=$order_id area="frontend"}}</item>
+                </item>
+                <item name="sales_invoice_items" xsi:type="array">
+                    <item name="label" xsi:type="string" translate="true">Invoice items</item>
+                    <item name="templates" xsi:type="array">
+                        <item name="0" xsi:type="string">sales_email_invoice_template</item>
+                        <item name="1" xsi:type="string">sales_email_invoice_guest_template</item>
+                    </item>
+                    <item name="directive" xsi:type="string">{{layout area="frontend" handle="sales_email_order_invoice_items" invoice_id=$invoice_id order_id=$order_id}}</item>
+                </item>
+                <item name="sales_shipment_items" xsi:type="array">
+                    <item name="label" xsi:type="string" translate="true">Shipment items</item>
+                    <item name="templates" xsi:type="array">
+                        <item name="0" xsi:type="string">sales_email_shipment_template</item>
+                        <item name="1" xsi:type="string">sales_email_shipment_guest_template</item>
+                    </item>
+                    <item name="directive" xsi:type="string">{{layout handle="sales_email_order_shipment_items" shipment_id=$shipment_id order_id=$order_id}}</item>
+                </item>
+                <item name="sales_shipment_tracking" xsi:type="array">
+                    <item name="label" xsi:type="string" translate="true">Tracking numbers</item>
+                    <item name="templates" xsi:type="array">
+                        <item name="0" xsi:type="string">sales_email_shipment_template</item>
+                        <item name="1" xsi:type="string">sales_email_shipment_guest_template</item>
+                    </item>
+                    <item name="directive" xsi:type="string">{{layout handle="sales_email_order_shipment_track" shipment_id=$shipment_id order_id=$order_id}}</item>
+                </item>
+                <item name="sales_creditmemo_items" xsi:type="array">
+                    <item name="label" xsi:type="string" translate="true">Refunded items</item>
+                    <item name="templates" xsi:type="array">
+                        <item name="0" xsi:type="string">sales_email_creditmemo_template</item>
+                        <item name="1" xsi:type="string">sales_email_creditmemo_guest_template</item>
+                    </item>
+                    <item name="directive" xsi:type="string">{{layout handle="sales_email_order_creditmemo_items" creditmemo_id=$creditmemo_id order_id=$order_id}}</item>
+                </item>
+                <item name="sales_billing_address" xsi:type="array">
+                    <item name="label" xsi:type="string" translate="true">Billing address</item>
+                    <item name="templates" xsi:type="array">
+                        <item name="0" xsi:type="string">sales_email_order_template</item>
+                        <item name="1" xsi:type="string">sales_email_order_guest_template</item>
+                        <item name="2" xsi:type="string">sales_email_invoice_template</item>
+                        <item name="3" xsi:type="string">sales_email_invoice_guest_template</item>
+                        <item name="4" xsi:type="string">sales_email_shipment_template</item>
+                        <item name="5" xsi:type="string">sales_email_shipment_guest_template</item>
+                        <item name="6" xsi:type="string">sales_email_creditmemo_template</item>
+                        <item name="7" xsi:type="string">sales_email_creditmemo_guest_template</item>
+                    </item>
+                    <item name="directive" xsi:type="string">{{var formattedBillingAddress|raw}}</item>
+                </item>
+                <item name="sales_shipping_address" xsi:type="array">
+                    <item name="label" xsi:type="string" translate="true">Shipping address</item>
+                    <item name="templates" xsi:type="array">
+                        <item name="0" xsi:type="string">sales_email_order_template</item>
+                        <item name="1" xsi:type="string">sales_email_order_guest_template</item>
+                        <item name="2" xsi:type="string">sales_email_invoice_template</item>
+                        <item name="3" xsi:type="string">sales_email_invoice_guest_template</item>
+                        <item name="4" xsi:type="string">sales_email_shipment_template</item>
+                        <item name="5" xsi:type="string">sales_email_shipment_guest_template</item>
+                        <item name="6" xsi:type="string">sales_email_creditmemo_template</item>
+                        <item name="7" xsi:type="string">sales_email_creditmemo_guest_template</item>
+                    </item>
+                    <item name="directive" xsi:type="string">{{depend order_data.is_not_virtual}}{{var formattedShippingAddress|raw}}{{/depend}}</item>
+                </item>
+                <item name="sales_payment_method" xsi:type="array">
+                    <item name="label" xsi:type="string" translate="true">Payment method</item>
+                    <item name="templates" xsi:type="array">
+                        <item name="0" xsi:type="string">sales_email_order_template</item>
+                        <item name="1" xsi:type="string">sales_email_order_guest_template</item>
+                        <item name="2" xsi:type="string">sales_email_invoice_template</item>
+                        <item name="3" xsi:type="string">sales_email_invoice_guest_template</item>
+                        <item name="4" xsi:type="string">sales_email_shipment_template</item>
+                        <item name="5" xsi:type="string">sales_email_shipment_guest_template</item>
+                        <item name="6" xsi:type="string">sales_email_creditmemo_template</item>
+                        <item name="7" xsi:type="string">sales_email_creditmemo_guest_template</item>
+                    </item>
+                    <item name="directive" xsi:type="string">{{var payment_html|raw}}</item>
+                </item>
+                <item name="sales_shipping_method" xsi:type="array">
+                    <item name="label" xsi:type="string" translate="true">Shipping method</item>
+                    <item name="templates" xsi:type="array">
+                        <item name="0" xsi:type="string">sales_email_order_template</item>
+                        <item name="1" xsi:type="string">sales_email_order_guest_template</item>
+                        <item name="2" xsi:type="string">sales_email_invoice_template</item>
+                        <item name="3" xsi:type="string">sales_email_invoice_guest_template</item>
+                        <item name="4" xsi:type="string">sales_email_shipment_template</item>
+                        <item name="5" xsi:type="string">sales_email_shipment_guest_template</item>
+                        <item name="6" xsi:type="string">sales_email_creditmemo_template</item>
+                        <item name="7" xsi:type="string">sales_email_creditmemo_guest_template</item>
+                    </item>
+                    <item name="directive" xsi:type="string">{{depend order_data.is_not_virtual}}{{var order.shipping_description}}{{/depend}}</item>
+                </item>
+                <item name="sales_customer_note" xsi:type="array">
+                    <item name="label" xsi:type="string" translate="true">Customer note</item>
+                    <item name="templates" xsi:type="array">
+                        <item name="0" xsi:type="string">sales_email_order_template</item>
+                        <item name="1" xsi:type="string">sales_email_order_guest_template</item>
+                    </item>
+                    <item name="directive" xsi:type="string">{{depend order_data.email_customer_note}}{{var order_data.email_customer_note|escape|nl2br}}{{/depend}}</item>
+                </item>
+                <item name="sales_comment" xsi:type="array">
+                    <item name="label" xsi:type="string" translate="true">Comment</item>
+                    <item name="templates" xsi:type="array">
+                        <item name="0" xsi:type="string">sales_email_invoice_template</item>
+                        <item name="1" xsi:type="string">sales_email_invoice_guest_template</item>
+                        <item name="2" xsi:type="string">sales_email_shipment_template</item>
+                        <item name="3" xsi:type="string">sales_email_shipment_guest_template</item>
+                        <item name="4" xsi:type="string">sales_email_creditmemo_template</item>
+                        <item name="5" xsi:type="string">sales_email_creditmemo_guest_template</item>
+                    </item>
+                    <item name="directive" xsi:type="string">{{depend comment}}{{var comment|escape|nl2br}}{{/depend}}</item>
+                </item>
+            </argument>
+        </arguments>
+    </type>
+</config>

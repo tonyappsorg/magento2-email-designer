@@ -40,6 +40,10 @@ class DesignControllerTest extends AbstractBackendController
         self::assertStringContainsString('"base":"sales_email_order_template"', $body);
         self::assertStringContainsString('{{var order.increment_id}}', $body);
         self::assertStringContainsString('ta-store-logo', $body);
+        // The order email's own blocks.
+        self::assertStringContainsString('"id":"sales_order_items"', $body);
+        self::assertStringContainsString('sales_email_order_items', $body);
+        self::assertStringNotContainsString('"id":"sales_invoice_items"', $body);
     }
 
     public function testTheEditorNeedsAKnownEmailAndAName(): void
