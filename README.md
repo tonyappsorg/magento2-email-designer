@@ -1,110 +1,83 @@
-# Tonyapps_EmailDesigner
+# Visual Email Designer for Magento 2
 
-A drag-and-drop email designer in the Magento admin. Store staff build or restyle transactional emails visually
-(Tonyapps modules and core Magento: orders, invoices, shipments, accounts) instead of editing template HTML.
+Design Magento's transactional emails with drag and drop, without editing template HTML.
 
-**Status: scope approved 2026-11-11. Phase 1 built 2026-11-11 (unit, integration and browser checks green); manual QA in the admin pending. Phases 2–3 not started.**
+In Magento Open Source, changing what an order confirmation or shipment email looks like means editing template
+HTML and directives by hand in *Marketing > Email Templates*. This module adds a visual designer to the admin.
+Staff build an email from sections, columns, text, images and buttons. The designer saves it as an ordinary
+Magento email template, which you select in the email's setting the same way as any custom template.
 
-Owner decisions taken 2026-11-11: a shared module, not part of AbandonedCart (13 Tonyapps templates in 7 modules
-plus core emails would all use it); editor = **GrapesJS** (BSD-3, self-hosted, no API key) with **MJML** output; scope = **Tonyapps and
-core Magento emails**. Replaces WORKPLAN item 8, "AbandonedCart email designer".
+## Features
 
-## Core idea: the designer outputs ordinary email templates
+- **Drag-and-drop editor**: lay out an email from sections, columns, text, images, buttons, dividers, spacers and
+  social links, style them, switch between desktop and mobile view, and use the code view if you need it.
+- **Responsive, email-client-safe output**: designs are written in MJML and compiled to table-based HTML with
+  inlined CSS, the kind of markup Outlook and Gmail display reliably.
+- **Any transactional email**: start a design for any email template known to the store, core Magento or a
+  Tonyapps module.
+- **Starter layout**: a new design opens with a header with your logo, a content area, a button and a footer.
+- **Store blocks**: drop in the store logo (each store sends its own), store name and store contact details.
+- **Insert values**: a menu in the text toolbar inserts the email's own variables (order number, customer name and
+  so on) and the store's.
+- **Sales email blocks**: order, invoice, shipment and credit memo emails (customer and guest) get ready-made
+  blocks: items table, tracking numbers, billing and shipping address, payment and shipping method, customer note
+  and comment. They stay locked in the canvas, so a design can't break an items table.
+- **Subject line**: edit the subject, with variables, in the designer.
+- **Preview and test send**: preview the email with sample data at desktop or mobile width, and send a test to
+  any address.
+- **Version history**: every save keeps the previous version (the last 10). Restore one with a click.
+- **Safe to switch off**: designs are normal email templates. Disabling the module leaves them working, you just
+  can't edit them visually any more.
+- **No external calls**: the editor (GrapesJS) and MJML are bundled with the module. Nothing loads from a CDN,
+  and the editor's telemetry is switched off.
 
-A design is saved as a normal row in core `email_template` (Marketing > Email Templates). The HTML is generated
-from the visual design, and the design itself (the GrapesJS project) is kept next to it. Because of that:
+## How it works
 
-- No module that sends email changes. A store uses a design the same way it uses any custom template today:
-  it picks the template in that email's setting (e.g. *Sales Emails > Order > New Order Confirmation Template*,
-  *Abandoned Cart > Email Template*).
-- Template variables, `{{trans}}`, `{{layout}}` and `{{depend}}`/`{{if}}`/`{{for}}` keep working, because the
-  output is processed by core's template filter like any other template.
-- Turning the module off breaks nothing. Already saved designs stay valid templates. You can only no longer
-  edit them visually.
+1. Open **Marketing > Communications > Email Designer** and click **New design**. Pick the email it is for.
+2. Build the email in the editor, set the subject, preview it and send yourself a test.
+3. Save. The design is stored as a template in **Marketing > Email Templates**.
+4. Select it in that email's setting, for example *Stores > Configuration > Sales > Sales Emails > Order > New
+   Order Confirmation Template*. The designer grid shows which settings use each design.
 
-## Scope and decisions (proposal)
+Magento sends the email as usual. Variables, translations (`{{trans}}`) and conditions keep working, because
+Magento processes the template like any other.
 
-| Feature | Proposal |
-|---|---|
-| Where | **Marketing > Email Designer**: a grid of designs (name, based-on template, used in which settings, modified). **New design** asks for the email it is for (any template from `email_templates.xml`, core or Tonyapps). There is also a **Design visually** button on the core *Email Templates* edit page for templates created by the designer. ACL `Tonyapps_EmailDesigner::designs`. |
-| Editor | GrapesJS with its newsletter preset: a canvas, blocks to drag in (sections, columns, text, image, button, divider, spacer, social links), style panel (colours, fonts, spacing, borders), undo/redo, desktop and mobile view, and a code view for advanced users. The assets are bundled in the module (no CDN), with a pinned version. |
-| Magento blocks | Blocks specific to Magento, each one inserting a directive and showing a readable placeholder in the canvas (a "Product list" box rather than raw `{{layout ...}}`). The directive inside is not editable as text. **Common:** store logo, store name, store address and phone, *View in browser* is out of scope. **Per email:** a **Variable** block listing that email's own variables (read from the template's `@vars`, the same list core shows in *Insert Variable*), and rich blocks registered by modules: order items table, totals, billing and shipping address, payment and shipping method (core sales emails); cart items with images, subtotal, coupon, restore button, promotion block (AbandonedCart); review link (ReviewReminder); product and back-in-stock link (StockNotification); quote lines and totals (B2bQuotes); cart table (B2bOrderApproval); and so on. |
-| Starting point | A new design starts from a **starter layout** (header with logo, content, button, footer) with the email's essential blocks already in place. Example: the order items and totals blocks for an order email. A design cannot be imported from an existing HTML template: arbitrary template HTML does not convert reliably into editor blocks. |
-| Brand theme | One **brand theme** per store configuration: logo, primary and secondary colour, font, button style, footer text. New designs use it, and a design can **Re-apply theme**. Changing the theme does not silently restyle saved designs. |
-| Subject | Edited in the designer (with variables), saved to the template's subject. |
-| Preview | A live preview with **sample data** per email type: a real recent order, cart, quote etc. picked by the admin, or a generated sample when there is none. It is rendered through core's template filter, so it shows exactly what will be sent. The desktop and mobile widths are switchable. |
-| Test send | **Send test** to an address (default: the admin's own), with the chosen sample data. |
-| Email-client safety | **MJML** (owner decision 2026-11-11). The editor works on MJML through the `grapesjs-mjml` plugin, and on save the browser compiles it with `mjml-browser` into responsive, table-based HTML with inlined CSS, which works in Outlook and Gmail. The server needs no Node.js: the compiled HTML goes to `email_template` and the MJML source to the design. Magento directives sit inside `mj-text` (variables) or `mj-raw` (rich blocks), which MJML passes through unchanged. |
-| Store views | Same as core: a template is global and the per-store choice happens in configuration. One design can be assigned to several store views, and a store view can use its own design. Translations: `{{trans}}` text blocks stay translatable via core translations; free text typed in the editor is per design. |
-| Versions | Each save keeps the previous version (last 10). **Restore** puts a previous version back. |
-| Safety | Only admins with the ACL can design. Generated HTML passes core's template filter in strict mode: only `{{var obj.field}}` and allow-listed directives, no method calls, the same rules core applies to custom templates. Image uploads go through the core media gallery (WYSIWYG image uploader) into `pub/media/email/`. |
+## Good to know
 
-## Data model
+- Images are added by URL. Uploading through the media gallery is not available yet.
+- Ready-made blocks exist for core sales emails only. Tonyapps module emails can be designed with text, variables
+  and the store blocks, but have no rich blocks or starter designs of their own yet.
+- Preview and test send use generated sample data. The preview shows rich blocks such as the items table as
+  labelled boxes, and in a test send the items table comes out empty. Previewing with a real order is planned.
+- There is no brand theme yet (shared logo, colours, font and button style for all designs).
+- Existing hand-written HTML templates can't be converted into visual designs. Designs start from the starter
+  layout.
+- Transactional emails only: not for newsletters or marketing campaigns, and no A/B tests or open and click
+  tracking.
+- There is no *Design visually* button on core's *Email Templates* page yet. Open designs from the Email
+  Designer grid.
 
-- `tonyapps_email_design`: id, template id (FK to `email_template`, cascade), design name, base template code (`orig_template_code`), GrapesJS project JSON (MJML components), theme snapshot, created and updated by, created and updated at.
-- `tonyapps_email_design_version`: id, design id (FK, cascade), project JSON, MJML source, compiled HTML, subject, created by, created at.
-- `tonyapps_email_theme`: id, scope (default/website/store), scope id, logo, colours, font, button style, footer HTML.
-- Rich blocks are registered in `di.xml` (`Tonyapps\EmailDesigner\Model\BlockPool`), keyed by template code or a group like "all sales emails". Each block has a label, an icon, a placeholder preview and the directive it inserts. The other Tonyapps modules add their blocks with their own `di.xml`, in an optional `etc/di.xml` section that only does anything when EmailDesigner is installed.
+## Requirements
 
-## Phases
+- Magento Open Source 2.4 (developed on 2.4.8)
+- PHP 8.3 or 8.4
+- Magento modules: Backend, Email, Store, Theme, User
 
-1. **Editor and storage — built 2026-11-11:**
-   - **Marketing › Communications › Email Designer:** a grid and a **New design** form.
-   - **GrapesJS + MJML editor:** starter layout; Magento blocks *Store logo*, *Store name* and *Store contact*; an **Insert value** menu in the text toolbar with the email's own variables and the store's.
-   - **Save:** writes to `email_template`.
-   - **Subject:** edited in the designer.
-   - **Preview:** with generated sample data, desktop and mobile width.
-   - **Send test:** to an address.
-   - **Versions:** the last 10, with **Restore**.
-   - **Not in phase 1:**
-     - the **Design visually** button on core's *Email Templates* page;
-     - image upload through the media gallery (images are added by URL for now).
-   - **Next:** both move to phase 2.
-2. **Rich blocks:** core sales emails (order, invoice, shipment, credit memo, plus account emails), then the 13 Tonyapps emails. A **starter design** is provided for each Tonyapps email, built from today's redesigned templates. Phase 2 also adds the *Design visually* button and image upload.
-3. **Brand theme:** per scope, applied to new designs, Re-apply theme. Preview with real data (pick an order, cart or quote).
+## Installation
 
-## How it works (phase 1)
+```
+composer require tonyapps/module-email-designer
+bin/magento module:enable Tonyapps_EmailDesigner
+bin/magento setup:upgrade
+```
 
-**Compiling and protecting directives**
+## Configuration
 
-- **Compiling:** the browser compiles MJML to HTML with the `mjml-code-to-html` command of `grapesjs-mjml`. No Node.js is needed on the server.
-- **Protecting directives:** MJML breaks attribute values that contain quotes, e.g. `href="{{store url="..."}}"`. Before compiling, `view/adminhtml/web/js/directives.js` swaps every `{{...}}` directive for a plain token and decodes it. After compiling, it restores the directives.
-- **Logo:** the *Store logo* block shows the default email logo in the editor. On save it becomes `{{var logo_url}}`, so each store sends its own logo.
+- **Marketing > Communications > Email Designer**: designs grid, editor.
+- **System > Permissions > User Roles**: *Marketing > Communications > Email Designer* grants access.
+- Use a design in the email's own setting in **Stores > Configuration** (for example *Sales > Sales Emails*).
 
-**Editor**
+## For developers
 
-- **Telemetry:** off (`telemetry: false`). The admin never contacts grapesjs.com.
-- **Bundled libraries:** pinned, unmodified copies in `view/adminhtml/web/{js/lib,css}`. Licences are in `THIRD-PARTY-NOTICES.md`.
-
-**Preview and test send**
-
-- **Sample data:** both use sample data built from the email's `@vars`: `var order.increment_id` → `[Order Id]`, and a getter such as `order.getCustomerName()` fills `customer_name`.
-- **Variables core fills itself:** `store`, `logo_url` and so on keep their real values.
-- **Not rendered yet:** `{{layout}}` blocks such as the order items table need real data, which comes in phase 2–3.
-
-## Tests
-
-- Unit: `vendor/bin/phpunit -c dev/tests/unit/phpunit.xml.dist app/code/Tonyapps/EmailDesigner/Test/Unit`
-- Integration (DDEV setup in the workspace WORKPLAN, item 3): `…/phpunit -c phpunit.xml ../../../app/code/Tonyapps/EmailDesigner/Test/Integration`. These tests cover:
-  - saving to `email_template`;
-  - keeping 10 versions, and restore;
-  - the cascade when the template is deleted in core;
-  - which settings use a design;
-  - preview and test send through core;
-  - the admin pages, AJAX actions and ACL;
-  - end to end, a design picked in ReviewReminder's and AbandonedCart's template setting is what their cron sends
-    (skipped when the module is not installed).
-- JS: `node Test/Js/directives.test.js [path/to/node_modules/mjml-browser]`. With the optional path it also compiles through real MJML.
-
-## Out of scope
-
-- Marketing campaigns and newsletters (core newsletter queue): transactional emails only.
-- Drag-and-drop editing of storefront pages or CMS blocks.
-- Converting existing hand-written HTML templates into visual designs.
-- A/B tests, open and click tracking.
-
-## Open points to settle before code
-
-- **MJML and directives:** check at build time that `mjml-browser` leaves `{{...}}` directives intact in attributes such as `mj-button href` and `mj-image src`, not only in text; if not, protect them with placeholders before compiling and restore them afterwards. Cost: about 1 MB more JS in the admin, loaded only on the designer page.
-- **Loops:** Magento's `{{for}}` loops (e.g. the AbandonedCart items) are placed only as whole rich blocks, not built in the editor, so a design cannot break a loop's markup.
-- **Licences:** GrapesJS is BSD-3 and `grapesjs-mjml` and MJML are MIT. Their notices must ship with the module and appear in the Composer package metadata.
+Architecture, decisions, data model and tests are in [AGENTS.md](AGENTS.md). Third-party licences are in
+[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
