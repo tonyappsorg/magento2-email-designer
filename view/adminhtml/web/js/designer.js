@@ -68,11 +68,17 @@ define([
      * A Magento block: one box in the canvas, a directive in the email. MJML passes mj-raw through as is;
      * inside a column it must be a table row, like the rows MJML renders around other content.
      */
-    function addBlockType(editor) {
+    function addBlockType(editor, config) {
         editor.Components.addType(BLOCK_TYPE, {
             extend: 'mj-raw',
-            isComponent: function () {
-                return false;
+            // Starter designs write a block as <mj-raw ta-block="id"></mj-raw>; unknown ids stay plain mj-raw.
+            isComponent: function (el) {
+                var id = el.tagName === 'MJ-RAW' && el.getAttribute('ta-block'),
+                    block = id && _.findWhere(config.blocks || [], {id: id});
+
+                return block
+                    ? {type: BLOCK_TYPE, name: block.label, taLabel: block.label, taDirective: block.directive, components: []}
+                    : false;
             },
             model: {
                 defaults: {
@@ -152,7 +158,9 @@ define([
             telemetry: false,
             storageManager: false,
             fromElement: false,
-            plugins: [mjmlPlugin, addBlockType]
+            plugins: [mjmlPlugin, function (ed) {
+                addBlockType(ed, config);
+            }]
         });
         if (config.project) {
             editor.loadProjectData(config.project);

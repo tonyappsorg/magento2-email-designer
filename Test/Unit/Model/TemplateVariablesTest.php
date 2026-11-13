@@ -93,4 +93,17 @@ class TemplateVariablesTest extends TestCase
         $factory->expects(self::once())->method('create')->willReturn($template);
         return $factory;
     }
+
+    public function testEachLoopGetsOneSampleRowWithTheFieldsItsBodyReads(): void
+    {
+        $samples = TemplateVariables::loopSamples(
+            '{{for item in items}}<td>{{var item.name}} {{var item.qty}} {{var item.name}}</td>{{/for}}'
+            . '{{for product in products }}{{var product.url}}{{var other.x}}{{/for}}'
+        );
+
+        self::assertSame(['items', 'products'], array_keys($samples));
+        self::assertSame(['name' => '[name]', 'qty' => '[qty]'], $samples['items'][0]->getData());
+        self::assertSame(['url' => '[url]'], $samples['products'][0]->getData());
+        self::assertSame([], TemplateVariables::loopSamples('<p>no loops</p>'));
+    }
 }

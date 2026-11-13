@@ -10,9 +10,9 @@ Package `tonyapps/module-email-designer` 0.1.0.
 
 - **2026-11-11**: scope approved. Phase 1 built (unit, integration and browser checks green). Manual QA in the
   admin passed (owner).
-- **Phase 2 (rich blocks): in progress.** Built 2026-11-11: block registry and core sales blocks (see
-  Architecture). Next: blocks and starter designs for the Tonyapps emails, then the *Design visually* button and
-  image upload.
+- **Phase 2 (rich blocks): in progress.** Built 2026-11-11: block registry and core sales blocks. Built
+  2026-11-13: starter designs and blocks for all 17 Tonyapps emails (see Architecture). Next: the *Design visually*
+  button and image upload.
 - **Phase 3 (brand theme, real-data preview): not started.**
 - Note: the old README status line still said "Phases 2–3 not started" after phase 2 work began; the phase list
   below is the current truth.
@@ -33,7 +33,11 @@ Package `tonyapps/module-email-designer` 0.1.0.
      invoice, shipment and credit memo emails (customer and guest): items table, tracking numbers, billing and
      shipping address, payment and shipping method, customer note, comment. They appear in the *This email*
      category of the block panel. The preview shows `{{layout}}` blocks as labelled boxes.
-   - Next: blocks and starter designs for the Tonyapps emails, then the *Design visually* button and image upload.
+   - Built 2026-11-13: starter designs and blocks for the Tonyapps emails, registered by each module (17 emails
+     in 7 modules; the scope's "13" missed B2b's 3 company emails and NotifyOnNewBrowserLogin). Emails without a
+     registered starter (core sales emails) start from the starter layout with all their blocks in the card. The
+     preview fills each `{{for}}` loop with one sample row.
+   - Next: the *Design visually* button and image upload.
    - Original scope: core sales emails (order, invoice, shipment, credit memo, plus account emails), then the 13
      Tonyapps emails. A **starter design** is provided for each Tonyapps email, built from today's redesigned
      templates. Phase 2 also adds the *Design visually* button and image upload.
@@ -63,9 +67,9 @@ from the visual design, and the design itself (the GrapesJS project) is kept nex
 | `Block/Adminhtml/Editor` + `templates/editor.phtml` | Editor page config (project, starter, variables, blocks, logo URL). |
 | `Model/DesignRepository` | Tables `tonyapps_email_design` / `_version`; `KEEP_VERSIONS = 10`, prunes older versions; `restore()`. |
 | `Model/Renderer` | Preview and test send through core's template filter. |
-| `Model/StarterLayout` | Starter MJML (header with logo, content, button, footer). |
+| `Model/StarterLayout` | Starter MJML: header with logo, a card holding the email's registered starter content (else a heading, a text, the email's blocks and a button), footer. |
 | `Model/TemplateVariables` | The email's variables from the template's `@vars` (the list core shows in *Insert Variable*) plus store variables; also the sample data. |
-| `Model/BlockPool` | Rich-block registry, `blocks` argument filled from `etc/di.xml`. |
+| `Model/BlockPool` | Rich-block and starter registry: `blocks` and `starters` arguments filled from `etc/di.xml` of this and other modules. |
 | `view/adminhtml/web/js/designer.js` | GrapesJS init (`telemetry: false`, `storageManager: false`, `grapesjs-mjml` plugin), Magento blocks, the `ta-block` component type, Insert value toolbar action, save/preview/test/versions UI. |
 | `view/adminhtml/web/js/directives.js` | Directive protection before/after MJML compile; store-logo swap. |
 | `view/adminhtml/web/{js/lib,css}` | Bundled libraries (see below). |
@@ -91,7 +95,9 @@ from the visual design, and the design itself (the GrapesJS project) is kept nex
 ### Preview and test send
 
 - **Sample data:** both use sample data built from the email's `@vars`: `var order.increment_id` →
-  `[Order Id]`, and a getter such as `order.getCustomerName()` fills `customer_name`.
+  `[Order Id]`, and a getter such as `order.getCustomerName()` fills `customer_name`. Each `{{for item in items}}`
+  in the design gets one sample row whose fields are named after what the loop reads (`{{var item.name}}` →
+  `[name]`); for a test send the loops are read from the saved template.
 - **Variables core fills itself:** `store`, `logo_url` and so on keep their real values.
 - **`{{layout}}` blocks:** the preview shows a labelled box instead (they load the real order by ID). A test send
   renders them with the sample ID, so the items table comes out empty. Real data comes in phase 3.
@@ -106,6 +112,11 @@ from the visual design, and the design itself (the GrapesJS project) is kept nex
   `Tonyapps\EmailDesigner\Model\BlockPool` in the module's `etc/di.xml` (`label`, `templates`: the email template
   IDs, `directive`). See this module's `etc/di.xml` for the core sales blocks. The entry is ignored when this module
   is not installed.
+- **Starter designs:** the `starters` argument maps an email template ID to `Vendor_Module::path/file.mjml`, the
+  content of the card's column (by convention `view/adminhtml/email_designer/`). Blocks in it are written
+  `<mj-raw ta-block="block_id"></mj-raw>`; the editor turns them into `ta-block` components (unknown IDs stay plain
+  `mj-raw`). Text keeps the original template's `{{trans}}` strings, so untouched text is still translated.
+  Example: `../AbandonedCart/etc/di.xml`.
 
 ## Data model
 
@@ -173,7 +184,6 @@ Out of scope:
 ## Known limitations and open points
 
 - Images by URL only until media-gallery upload (phase 2).
-- No rich blocks or starter designs for Tonyapps emails yet.
 - `{{layout}}` blocks: labelled box in preview; empty items table in a test send (sample ID). Real data: phase 3.
 - No brand theme (phase 3).
 
@@ -207,6 +217,11 @@ Open points recorded before code (scope stage):
   compiles through real MJML.
 
 ## Change history
+
+- **2026-11-13** — Starter designs and blocks for the Tonyapps emails: `BlockPool` `starters` argument and
+  `getStarter()`, `StarterLayout` takes the content or places the email's blocks, the editor recognises
+  `<mj-raw ta-block>`, loop sample rows in preview and test send. Integration test `RegisteredStartersTest` checks
+  every enabled Tonyapps email: starter exists, uses only its email's blocks, renders in strict mode.
 
 - **2026-11-11** — Phase 2 started: `Model/BlockPool`, `etc/di.xml` core sales blocks, `ta-block` component,
   preview shows `{{layout}}` blocks as labelled boxes (uncommitted at the time of the README split).

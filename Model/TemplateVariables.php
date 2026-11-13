@@ -56,9 +56,30 @@ class TemplateVariables
     }
 
     /** @return array<string, mixed> template variables filled with "[Label]" placeholders */
-    public function getSampleData(string $baseCode): array
+    public function getSampleData(string $baseCode, string $html = ''): array
     {
-        return self::buildSampleData($this->getDeclared($baseCode));
+        return self::loopSamples($html) + self::buildSampleData($this->getDeclared($baseCode));
+    }
+
+    /**
+     * {{for item in items}} with "[Label]" text in place of items would print nothing, so each loop gets one sample
+     * row whose fields are named after what the loop body reads: {{var item.name}} becomes "[name]".
+     *
+     * @return array<string, DataObject[]>
+     */
+    public static function loopSamples(string $html): array
+    {
+        preg_match_all('/\{\{for\s+(\w+)\s+in\s+(\w+)\s*\}\}(.*?)\{\{\/for\}\}/s', $html, $loops, PREG_SET_ORDER);
+        $samples = [];
+        foreach ($loops as [, $item, $list, $body]) {
+            preg_match_all('/\{\{var\s+' . $item . '\.(\w+)/', $body, $fields);
+            $row = [];
+            foreach (array_unique($fields[1]) as $field) {
+                $row[$field] = '[' . $field . ']';
+            }
+            $samples[$list] = [new DataObject($row)];
+        }
+        return $samples;
     }
 
     /**

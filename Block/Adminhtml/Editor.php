@@ -61,7 +61,11 @@ class Editor extends Template
         return (string)$this->json->serialize($config + [
             'base' => $baseCode,
             'baseLabel' => (string)$this->emailConfig->getTemplateLabel($baseCode),
-            'starter' => StarterLayout::mjml($logoUrl),
+            'starter' => StarterLayout::mjml(
+                $logoUrl,
+                $this->blockPool->getStarter($baseCode),
+                $this->blockPool->getFor($baseCode)
+            ),
             'logoUrl' => $logoUrl,
             'variables' => $this->templateVariables->getOptions($baseCode),
             'blocks' => $this->blockPool->getFor($baseCode),

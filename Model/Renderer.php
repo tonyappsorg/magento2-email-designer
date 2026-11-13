@@ -33,7 +33,7 @@ class Renderer
             ->setTemplateSubject($subject)
             ->setTemplateType(TemplateTypesInterface::TYPE_HTML)
             ->setDesignConfig(['area' => $this->getArea($baseCode), 'store' => $storeId]);
-        $variables = $this->templateVariables->getSampleData($baseCode);
+        $variables = $this->templateVariables->getSampleData($baseCode, $html);
 
         try {
             return [
@@ -68,7 +68,10 @@ class Renderer
         $this->transportBuilder
             ->setTemplateIdentifier((string)$templateId)
             ->setTemplateOptions(['area' => $this->getArea($baseCode), 'store' => $storeId])
-            ->setTemplateVars($this->templateVariables->getSampleData($baseCode))
+            ->setTemplateVars($this->templateVariables->getSampleData(
+                $baseCode,
+                (string)$this->templateFactory->create()->load($templateId)->getTemplateText()
+            ))
             ->setFromByScope('general', $storeId)
             ->addTo($email)
             ->getTransport()
