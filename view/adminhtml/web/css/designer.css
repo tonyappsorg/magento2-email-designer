@@ -22,3 +22,6 @@
 .ta-designs-note { margin: 14px 0 0; color: #666; }
 .ta-designs-unused { color: #999; }
 .ta-designs-grid td { vertical-align: top; }
+.ta-media-gallery { display: block; margin: 0 0 12px; padding: 8px 14px; cursor: pointer; }
+.ta-designer .gjs-am-file-uploader { display: none; }
+.ta-designer .gjs-am-assets-cont { width: 100%; }

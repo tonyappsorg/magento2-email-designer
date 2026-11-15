@@ -123,6 +123,55 @@ define([
         });
     }
 
+    /**
+     * Images from core's media browser. GrapesJS's image picker gets a "Media gallery" button; the browser writes the
+     * chosen file's path into a hidden field, which becomes an absolute URL on the image (emails need one).
+     */
+    function addMediaGallery(editor, images) {
+        var $input = images ? $('#' + images.inputId) : $(),
+            select = null,
+            $button;
+
+        if (!$input.length) {
+            return;
+        }
+        $button = $('<button type="button" class="ta-media-gallery gjs-btn-prim"></button>')
+            .text($t('Upload or choose from the media gallery'))
+            .on('click', function () {
+                var am = editor.AssetManager,
+                    target = editor.getSelected();
+
+                // The picker's own callback knows its target (an image dropped just now is not selected yet).
+                select = (am.__getBehaviour ? am.__getBehaviour() : {}).select || function (asset) {
+                    if (target) {
+                        target.set('src', asset.getSrc());
+                    }
+                };
+                editor.Modal.close();
+                require(['mage/adminhtml/browser'], function () {
+                    window.MediabrowserUtility.openDialog(images.browserUrl, null, null, $t('Insert Image'), {
+                        targetElementId: images.inputId
+                    });
+                });
+            });
+        $input.on('change', function () {
+            var asset = editor.AssetManager.add(new URL($input.val(), images.mediaUrl).href);
+
+            if (select) {
+                select(asset, true);
+            }
+            select = null;
+        });
+        editor.on('asset:open', function () {
+            var content = editor.Modal.getContentEl();
+
+            // One button, moved into the picker each time it opens.
+            if (content && !$.contains(content, $button[0])) {
+                $button.prependTo(content);
+            }
+        });
+    }
+
     function addVariableAction(editor, variables) {
         editor.RichTextEditor.add('ta-variable', {
             icon: variableSelect(variables),
@@ -158,6 +207,9 @@ define([
             telemetry: false,
             storageManager: false,
             fromElement: false,
+            // Uploads go through core's media browser (addMediaGallery); GrapesJS's own dropzone has no endpoint
+            // (it is also hidden in designer.css).
+            assetManager: {upload: false},
             plugins: [mjmlPlugin, function (ed) {
                 addBlockType(ed, config);
             }]
@@ -170,6 +222,7 @@ define([
         addMagentoBlocks(editor, config);
         addEmailBlocks(editor, config);
         addVariableAction(editor, config.variables);
+        addMediaGallery(editor, config.images);
 
         editor.on('update', function () {
             dirty = true;

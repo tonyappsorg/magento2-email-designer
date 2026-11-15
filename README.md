@@ -25,6 +25,9 @@ Magento email template, which you select in the email's setting the same way as 
   blocks: items table, tracking numbers, billing and shipping address, payment and shipping method, customer note
   and comment. Tonyapps emails get theirs too: cart items and coupon, products to review, quote and approval
   tables, product alerts and more. Blocks stay locked in the canvas, so a design can't break an items table.
+- **Your own images**: upload images or pick them from Magento's media gallery right in the image picker. They
+  are stored in `pub/media/email/` and sent with their full address, so every email client shows them. Adding an
+  image by URL still works.
 - **Subject line**: edit the subject, with variables, in the designer.
 - **Preview and test send**: preview the email with sample data at desktop or mobile width, and send a test to
   any address.
@@ -40,14 +43,14 @@ Magento email template, which you select in the email's setting the same way as 
 2. Build the email in the editor, set the subject, preview it and send yourself a test.
 3. Save. The design is stored as a template in **Marketing > Email Templates**.
 4. Select it in that email's setting, for example *Stores > Configuration > Sales > Sales Emails > Order > New
-   Order Confirmation Template*. The designer grid shows which settings use each design.
+   Order Confirmation Template*. The designer grid shows which settings use each design, and the template's page in
+   *Marketing > Email Templates* has a **Design Visually** button that opens it in the designer.
 
 Magento sends the email as usual. Variables, translations (`{{trans}}`) and conditions keep working, because
 Magento processes the template like any other.
 
 ## Good to know
 
-- Images are added by URL. Uploading through the media gallery is not available yet.
 - Preview and test send use generated sample data, with one sample row in lists such as cart items. Core sales
   items tables show as labelled boxes in the preview and come out empty in a test send. Previewing with a real
   order is planned.
@@ -56,14 +59,15 @@ Magento processes the template like any other.
   ready-made copy or the starter layout.
 - Transactional emails only: not for newsletters or marketing campaigns, and no A/B tests or open and click
   tracking.
-- There is no *Design visually* button on core's *Email Templates* page yet. Open designs from the Email
-  Designer grid.
+- A designed template can still be edited by hand in *Marketing > Email Templates*, but the next save in the
+  designer replaces those edits. Use **Design Visually** on that page to go back to the designer.
+- Uploading images needs the *Media Gallery* permission; without it, add images by URL.
 
 ## Requirements
 
 - Magento Open Source 2.4 (developed on 2.4.8)
 - PHP 8.3 or 8.4
-- Magento modules: Backend, Email, Store, Theme, User
+- Magento modules: Backend, Cms, Email, Store, Theme, User
 
 ## Installation
 

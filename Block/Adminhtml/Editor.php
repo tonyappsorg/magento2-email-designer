@@ -9,6 +9,7 @@ use Magento\Backend\Model\Auth\Session;
 use Magento\Email\Model\Template\Config as EmailConfig;
 use Magento\Email\Model\TemplateFactory;
 use Magento\Framework\Serialize\Serializer\Json;
+use Magento\Framework\UrlInterface;
 use Tonyapps\EmailDesigner\Model\BlockPool;
 use Tonyapps\EmailDesigner\Model\DesignRepository;
 use Tonyapps\EmailDesigner\Model\StarterLayout;
@@ -17,6 +18,9 @@ use Tonyapps\EmailDesigner\Model\TemplateVariables;
 /** Everything the editor script needs, as one JSON config. */
 class Editor extends Template
 {
+    /** Hidden field the media browser writes the chosen image into. */
+    public const IMAGE_INPUT_ID = 'ta-designer-image';
+
     protected $_template = 'Tonyapps_EmailDesigner::editor.phtml';
 
     public function __construct(
@@ -70,6 +74,7 @@ class Editor extends Template
             'variables' => $this->templateVariables->getOptions($baseCode),
             'blocks' => $this->blockPool->getFor($baseCode),
             'adminEmail' => (string)$this->authSession->getUser()?->getEmail(),
+            'images' => $this->getImagesConfig(),
             'urls' => [
                 'save' => $this->getUrl('*/*/save'),
                 'preview' => $this->getUrl('*/*/preview'),
@@ -78,5 +83,29 @@ class Editor extends Template
                 'back' => $this->getUrl('*/*/index'),
             ],
         ]);
+    }
+
+    /**
+     * Core's media browser, opened on pub/media/email (allowed as a media gallery folder in etc/config.xml, created
+     * on first use). Null without the media gallery ACL. The browser returns a path; the editor prefixes the
+     * storefront's media URL, as emails need absolute image URLs.
+     *
+     * @return array{browserUrl: string, mediaUrl: string, inputId: string}|null
+     */
+    private function getImagesConfig(): ?array
+    {
+        if (!$this->_authorization->isAllowed('Magento_Cms::media_gallery')) {
+            return null;
+        }
+        return [
+            'browserUrl' => $this->getUrl('cms/wysiwyg_images/index', [
+                'target_element_id' => self::IMAGE_INPUT_ID,
+                'type' => 'image',
+                // Base64 of "email" in core's id encoding (Cms Images helper idEncode).
+                'current_tree_path' => 'ZW1haWw-',
+            ]),
+            'mediaUrl' => (string)$this->_storeManager->getDefaultStoreView()?->getBaseUrl(UrlInterface::URL_TYPE_MEDIA),
+            'inputId' => self::IMAGE_INPUT_ID,
+        ];
     }
 }

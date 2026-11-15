@@ -10,9 +10,9 @@ Package `tonyapps/module-email-designer` 0.1.0.
 
 - **2026-11-11**: scope approved. Phase 1 built (unit, integration and browser checks green). Manual QA in the
   admin passed (owner).
-- **Phase 2 (rich blocks): in progress.** Built 2026-11-11: block registry and core sales blocks. Built
-  2026-11-13: starter designs and blocks for all 17 Tonyapps emails (see Architecture). Next: the *Design visually*
-  button and image upload.
+- **Phase 2 (rich blocks): built.** 2026-11-11: block registry and core sales blocks. 2026-11-13: starter designs
+  and blocks for all 17 Tonyapps emails (see Architecture). 2026-11-14: *Design Visually* button and image upload
+  through core's media browser. Admin QA of phase 2 by the owner pending.
 - **Phase 3 (brand theme, real-data preview): not started.**
 - Note: the old README status line still said "Phases 2–3 not started" after phase 2 work began; the phase list
   below is the current truth.
@@ -37,7 +37,8 @@ Package `tonyapps/module-email-designer` 0.1.0.
      in 7 modules; the scope's "13" missed B2b's 3 company emails and NotifyOnNewBrowserLogin). Emails without a
      registered starter (core sales emails) start from the starter layout with all their blocks in the card. The
      preview fills each `{{for}}` loop with one sample row.
-   - Next: the *Design visually* button and image upload.
+   - Built 2026-11-14: the *Design Visually* button on core's template edit page and image upload through core's
+     media browser into `pub/media/email/` (see Architecture).
    - Original scope: core sales emails (order, invoice, shipment, credit memo, plus account emails), then the 13
      Tonyapps emails. A **starter design** is provided for each Tonyapps email, built from today's redesigned
      templates. Phase 2 also adds the *Design visually* button and image upload.
@@ -102,6 +103,22 @@ from the visual design, and the design itself (the GrapesJS project) is kept nex
 - **`{{layout}}` blocks:** the preview shows a labelled box instead (they load the real order by ID). A test send
   renders them with the sample ID, so the items table comes out empty. Real data comes in phase 3.
 
+### Design Visually and images (phase 2)
+
+- **Design Visually:** `Plugin/DesignVisuallyButton` (`etc/adminhtml/di.xml`), `beforeSetLayout` on
+  `Magento\Email\Block\Adminhtml\Template\Edit`: core pushes its buttons to the toolbar while preparing the
+  layout, so the button is added before that. Shown only for a template with a design
+  (`DesignRepository::findIdByTemplate`) and with `Tonyapps_EmailDesigner::designs`.
+- **Images:** GrapesJS's image picker gets an *Upload or choose from the media gallery* button (`addMediaGallery`
+  in `designer.js`) that opens core's media browser (`cms/wysiwyg_images/index`, `MediabrowserUtility` from
+  `mage/adminhtml/browser`) on folder `email` (`current_tree_path` = core id encoding of "email", created on
+  first use). `etc/config.xml` adds `email` to the media gallery's allowed folders
+  (`system/media_storage_configuration/allowed_resources/media_gallery_image_folders`). The browser writes into a
+  hidden field (`ta-designer-image`, `data-force_static_path="1"`, so it returns a plain `/media/...` path, never
+  core's admin directive URL); the editor makes it absolute with the default store view's media URL and sets it on
+  the image. GrapesJS's own upload dropzone is off (no endpoint) and hidden in `designer.css`; adding by URL stays.
+  Needs `Magento_Cms::media_gallery`; without it the config has `images: null` and no button.
+
 ### Magento blocks (phase 2)
 
 - **In the canvas:** a block (component type `ta-block`, extends `mj-raw`) is one box with its name; it cannot be
@@ -145,7 +162,8 @@ which only does anything when EmailDesigner is installed.
 
 - Menu: **Marketing › Communications › Email Designer** (`Tonyapps_EmailDesigner::designs`, parent
   `Magento_Backend::marketing_communications`, route `tonyapps_emaildesigner/design/index`).
-- ACL: `Tonyapps_EmailDesigner::designs`.
+- ACL: `Tonyapps_EmailDesigner::designs`. Image upload also needs core's `Magento_Cms::media_gallery`.
+- `etc/config.xml`: media gallery allowed folder `email` (see Design Visually and images).
 - No `system.xml`. Designs are used through each email's existing template setting.
 
 ## Decisions and constraints
@@ -161,7 +179,7 @@ Scope table (approved 2026-11-11; status per row in brackets):
 
 | Feature | Decision |
 |---|---|
-| Where | **Marketing > Email Designer**: a grid of designs (name, based-on template, used in which settings, modified). **New design** asks for the email it is for (any template from `email_templates.xml`, core or Tonyapps). A **Design visually** button on the core *Email Templates* edit page for templates created by the designer [phase 2, not built]. ACL `Tonyapps_EmailDesigner::designs`. |
+| Where | **Marketing > Email Designer**: a grid of designs (name, based-on template, used in which settings, modified). **New design** asks for the email it is for (any template from `email_templates.xml`, core or Tonyapps). A **Design visually** button on the core *Email Templates* edit page for templates created by the designer [built 2026-11-14]. ACL `Tonyapps_EmailDesigner::designs`. |
 | Editor | GrapesJS: canvas, blocks to drag in (sections, columns, text, image, button, divider, spacer, social links), style panel (colours, fonts, spacing, borders), undo/redo, desktop and mobile view, code view. The scope said "newsletter preset"; the build uses the `grapesjs-mjml` plugin. Assets bundled in the module (no CDN), pinned version. |
 | Magento blocks | Each inserts a directive and shows a readable placeholder in the canvas (a "Product list" box rather than raw `{{layout ...}}`); the directive is not editable as text. **Common:** store logo, store name, store address and phone [built]; *View in browser* is out of scope. **Per email:** a **Variable** block listing that email's own variables from `@vars` [built as the Insert value toolbar menu], and rich blocks registered by modules: order items table, totals, billing and shipping address, payment and shipping method (core sales emails) [built; no separate totals block, core's items layout handles render the totals]; cart items with images, subtotal, coupon, restore button, promotion block (AbandonedCart); review link (ReviewReminder); product and back-in-stock link (StockNotification); quote lines and totals (B2bQuotes); cart table (B2bOrderApproval); and so on [not built]. |
 | Starting point | A new design starts from a **starter layout** (header with logo, content, button, footer) with the email's essential blocks in place, e.g. order items and totals for an order email. No import from existing HTML templates: arbitrary template HTML does not convert reliably into editor blocks. |
@@ -172,7 +190,7 @@ Scope table (approved 2026-11-11; status per row in brackets):
 | Email-client safety | **MJML** (owner decision 2026-11-11). The editor works on MJML through `grapesjs-mjml`; on save the browser compiles it with `mjml-browser` into responsive, table-based HTML with inlined CSS (Outlook, Gmail). Server needs no Node.js. Directives sit inside `mj-text` (variables) or `mj-raw` (rich blocks), which MJML passes through unchanged. |
 | Store views | Same as core: a template is global and the per-store choice happens in configuration. One design can be assigned to several store views, and a store view can use its own design. `{{trans}}` text blocks stay translatable via core translations; free text typed in the editor is per design. |
 | Versions | Each save keeps the previous version (last 10). **Restore** puts a previous version back. |
-| Safety | Only admins with the ACL can design. Generated HTML passes core's template filter in strict mode: only `{{var obj.field}}` and allow-listed directives, no method calls, the same rules core applies to custom templates. Image uploads go through the core media gallery (WYSIWYG image uploader) into `pub/media/email/` [phase 2, not built; images by URL for now]. |
+| Safety | Only admins with the ACL can design. Generated HTML passes core's template filter in strict mode: only `{{var obj.field}}` and allow-listed directives, no method calls, the same rules core applies to custom templates. Image uploads go through the core media gallery (WYSIWYG image uploader) into `pub/media/email/` [built 2026-11-14; images by URL still possible]. |
 
 Out of scope:
 
@@ -183,7 +201,8 @@ Out of scope:
 
 ## Known limitations and open points
 
-- Images by URL only until media-gallery upload (phase 2).
+- Images use the default store view's media URL, so a store on another domain loads them from the default one.
+- Hand edits in core's template form are overwritten by the next designer save (the design holds the MJML).
 - `{{layout}}` blocks: labelled box in preview; empty items table in a test send (sample ID). Real data: phase 3.
 - No brand theme (phase 3).
 
@@ -218,6 +237,14 @@ Open points recorded before code (scope stage):
 
 ## Change history
 
+- **2026-11-14** — *Design Visually* button on core's template edit page (`Plugin/DesignVisuallyButton`,
+  `DesignRepository::findIdByTemplate`); image upload through core's media browser into `pub/media/email/`
+  (`etc/config.xml` allowed folder, `Editor::getImagesConfig`, `addMediaGallery`); `magento/module-cms` added to
+  `composer.json`. Tests: `DesignVisuallyButtonTest`, `DesignControllerTest` (button on core's page, none for a
+  hand-written template, media browser URL, core media browser opens on `email`, `onInsert` returns a plain
+  path), browser check with a stubbed media browser (selected image and a freshly dropped unselected one; the
+  picker callback from `AssetManager.__getBehaviour().select` sets the image). Not tested: a real upload and pick in
+  the admin dialog (owner QA).
 - **2026-11-13** — Starter designs and blocks for the Tonyapps emails: `BlockPool` `starters` argument and
   `getStarter()`, `StarterLayout` takes the content or places the email's blocks, the editor recognises
   `<mj-raw ta-block>`, loop sample rows in preview and test send. Integration test `RegisteredStartersTest` checks

@@ -152,6 +152,18 @@ class DesignRepository
         }
     }
 
+    /** The design that writes this email template, if any. */
+    public function findIdByTemplate(int $templateId): ?int
+    {
+        $connection = $this->resource->getConnection();
+        $id = $connection->fetchOne(
+            $connection->select()
+                ->from($this->resource->getTableName(self::DESIGN_TABLE), ['design_id'])
+                ->where('template_id = ?', $templateId)
+        );
+        return $id ? (int)$id : null;
+    }
+
     /** @return array<int, array<string, mixed>> newest first, with the admin's username */
     public function getVersions(int $designId): array
     {

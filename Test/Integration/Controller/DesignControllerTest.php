@@ -46,6 +46,74 @@ class DesignControllerTest extends AbstractBackendController
         self::assertStringNotContainsString('"id":"sales_invoice_items"', $body);
     }
 
+    public function testTheEditorOpensTheMediaBrowserOnTheEmailFolder(): void
+    {
+        $this->dispatch('backend/tonyapps_emaildesigner/design/edit/base/sales_email_order_template/name/Autumn');
+
+        $body = html_entity_decode($this->getResponse()->getBody());
+        self::assertStringContainsString('cms\/wysiwyg_images\/index\/target_element_id\/ta-designer-image', $body);
+        self::assertStringContainsString('current_tree_path\\/ZW1haWw-', $body);
+        self::assertStringContainsString('id="ta-designer-image" data-force_static_path="1"', $body);
+    }
+
+    public function testCoresMediaBrowserOpensOnTheEmailFolder(): void
+    {
+        $media = Bootstrap::getObjectManager()->get(\Magento\Framework\Filesystem::class)
+            ->getDirectoryWrite(\Magento\Framework\App\Filesystem\DirectoryList::MEDIA);
+
+        $this->dispatch('backend/cms/wysiwyg_images/index/target_element_id/ta-designer-image/type/image/current_tree_path/ZW1haWw-');
+
+        self::assertSame(200, $this->getResponse()->getHttpResponseCode());
+        self::assertStringContainsString('ta-designer-image', $this->getResponse()->getBody());
+        self::assertTrue($media->isDirectory('email'), 'the email folder is created for the browser');
+    }
+
+    /** The editor turns this path into an absolute URL (designer.js addMediaGallery); never an admin directive URL. */
+    public function testThePickedImageComesBackAsAPlainMediaPath(): void
+    {
+        $om = Bootstrap::getObjectManager();
+        $om->get(\Magento\Framework\Filesystem::class)
+            ->getDirectoryWrite(\Magento\Framework\App\Filesystem\DirectoryList::MEDIA)->create('email');
+        $images = $om->get(\Magento\Cms\Helper\Wysiwyg\Images::class);
+        $this->getRequest()->setMethod(HttpRequest::METHOD_POST)->setPostValue([
+            'filename' => $images->idEncode('banner.png'),
+            'node' => $images->idEncode('email'),
+            'as_is' => 0,
+            'force_static_path' => 1,
+        ]);
+
+        $this->dispatch('backend/cms/wysiwyg_images/onInsert');
+
+        self::assertMatchesRegularExpression('#^/(pub/)?media/email/banner\.png$#', $this->getResponse()->getBody());
+    }
+
+    public function testCoresTemplatePageLinksADesignedTemplateToTheDesigner(): void
+    {
+        $repository = Bootstrap::getObjectManager()->get(DesignRepository::class);
+        $designId = $repository->save(
+            null, 'Spring order', 'sales_email_order_template', 'Order', '{"pages":[]}', '<mjml></mjml>', self::HTML, null
+        );
+        $templateId = (int)$repository->get($designId)['template_id'];
+
+        $this->dispatch('backend/admin/email_template/edit/id/' . $templateId);
+
+        $body = $this->getResponse()->getBody();
+        self::assertStringContainsString('Design Visually', $body);
+        self::assertStringContainsString('tonyapps_emaildesigner/design/edit/id/' . $designId, $body);
+    }
+
+    public function testCoresTemplatePageHasNoDesignButtonForAHandWrittenTemplate(): void
+    {
+        $template = Bootstrap::getObjectManager()->create(\Magento\Email\Model\Template::class);
+        $template->setTemplateCode('Hand written ' . uniqid())->setTemplateText('<p>Hi</p>')
+            ->setTemplateSubject('Hi')->setTemplateType(2)->save();
+
+        $this->dispatch('backend/admin/email_template/edit/id/' . $template->getId());
+
+        self::assertStringContainsString('Delete Template', $this->getResponse()->getBody());
+        self::assertStringNotContainsString('Design Visually', $this->getResponse()->getBody());
+    }
+
     public function testTheEditorNeedsAKnownEmailAndAName(): void
     {
         $this->dispatch('backend/tonyapps_emaildesigner/design/edit/base/nope/name/Autumn');

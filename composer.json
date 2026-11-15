@@ -8,6 +8,7 @@
     "php": "~8.3.0||~8.4.0",
     "magento/framework": "*",
     "magento/module-backend": "*",
+    "magento/module-cms": "*",
     "magento/module-email": "*",
     "magento/module-store": "*",
     "magento/module-theme": "*",
