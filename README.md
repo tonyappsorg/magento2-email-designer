@@ -29,8 +29,12 @@ Magento email template, which you select in the email's setting the same way as 
   are stored in `pub/media/email/` and sent with their full address, so every email client shows them. Adding an
   image by URL still works.
 - **Subject line**: edit the subject, with variables, in the designer.
-- **Preview and test send**: preview the email with sample data at desktop or mobile width, and send a test to
-  any address.
+- **Preview with real data**: preview the email at desktop or mobile width with a real recent order, invoice,
+  shipment, cart, quote, approval request or alert from your store, or with sample data, and send yourself a test
+  of exactly that email. Nothing is sent to the customer or changed.
+- **Brand theme**: set your colours, font, button corners and footer once under *Stores › Configuration ›
+  Advanced › Email Designer*. New designs start with it and **Apply brand theme** brings an existing design up to
+  date; deliberate colours such as a green "approved" button stay.
 - **Version history**: every save keeps the previous version (the last 10). Restore one with a click.
 - **Safe to switch off**: designs are normal email templates. Disabling the module leaves them working, you just
   can't edit them visually any more.
@@ -51,10 +55,11 @@ Magento processes the template like any other.
 
 ## Good to know
 
-- Preview and test send use generated sample data, with one sample row in lists such as cart items. Core sales
-  items tables show as labelled boxes in the preview and come out empty in a test send. Previewing with a real
-  order is planned.
-- There is no brand theme yet (shared logo, colours, font and button style for all designs).
+- With sample data, lists such as cart items show one sample row, and core sales items tables show as labelled
+  boxes (empty in a test send). Pick a real record to see them filled in.
+- The brand theme is one for the whole store installation; the logo is each store's own email logo. Changing the
+  theme doesn't restyle saved designs until you apply it in the designer and save.
+- A real-data preview shows customer data to the admin, and a test with it goes only to the address you type.
 - Templates you have customised by hand can't be converted into visual designs. Designs start from the module's
   ready-made copy or the starter layout.
 - Transactional emails only: not for newsletters or marketing campaigns, and no A/B tests or open and click
@@ -80,6 +85,7 @@ bin/magento setup:upgrade
 ## Configuration
 
 - **Marketing > Communications > Email Designer**: designs grid, editor.
+- **Stores › Configuration › Advanced › Email Designer › Brand Theme**: colours, font, button corners, footer.
 - **System > Permissions > User Roles**: *Marketing > Communications > Email Designer* grants access.
 - Use a design in the email's own setting in **Stores > Configuration** (for example *Sales > Sales Emails*).
 

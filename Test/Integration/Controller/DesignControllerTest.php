@@ -114,6 +114,29 @@ class DesignControllerTest extends AbstractBackendController
         self::assertStringNotContainsString('Design Visually', $this->getResponse()->getBody());
     }
 
+    public function testTheBrandThemeIsSetInConfiguration(): void
+    {
+        $this->dispatch('backend/admin/system_config/edit/section/tonyapps_emaildesigner');
+        $body = $this->getResponse()->getBody();
+        self::assertStringContainsString('Brand Theme', $body);
+        self::assertMatchesRegularExpression('/<input id="tonyapps_emaildesigner_theme_primary"[^>]*type="color"/', $body);
+        self::assertStringContainsString('Georgia', $body);
+    }
+
+    public function testTheEditorGetsTheBrandThemeAndTheDefaultItIsWrittenIn(): void
+    {
+        $config = Bootstrap::getObjectManager()->get(\Magento\Framework\App\Config\MutableScopeConfigInterface::class);
+        $config->setValue('tonyapps_emaildesigner/theme/primary', '#aa0055');
+        try {
+            $this->dispatch('backend/tonyapps_emaildesigner/design/edit/base/sales_email_order_template/name/Autumn');
+        } finally {
+            $config->setValue('tonyapps_emaildesigner/theme/primary', null);
+        }
+        $editor = html_entity_decode($this->getResponse()->getBody());
+        self::assertStringContainsString('"theme":{"primary":"#aa0055"', $editor);
+        self::assertStringContainsString('"defaultTheme":{"primary":"#1979c3"', $editor);
+    }
+
     public function testTheEditorNeedsAKnownEmailAndAName(): void
     {
         $this->dispatch('backend/tonyapps_emaildesigner/design/edit/base/nope/name/Autumn');

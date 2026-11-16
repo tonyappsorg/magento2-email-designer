@@ -13,7 +13,8 @@ Package `tonyapps/module-email-designer` 0.1.0.
 - **Phase 2 (rich blocks): built.** 2026-11-11: block registry and core sales blocks. 2026-11-13: starter designs
   and blocks for all 17 Tonyapps emails (see Architecture). 2026-11-14: *Design Visually* button and image upload
   through core's media browser. Admin QA of phase 2 by the owner pending.
-- **Phase 3 (brand theme, real-data preview): not started.**
+- **Phase 3 (brand theme, real-data preview): built 2026-11-15** (scope detail below, owner decisions 2026-11-15).
+  Owner's admin QA pending.
 - Note: the old README status line still said "Phases 2–3 not started" after phase 2 work began; the phase list
   below is the current truth.
 
@@ -42,8 +43,28 @@ Package `tonyapps/module-email-designer` 0.1.0.
    - Original scope: core sales emails (order, invoice, shipment, credit memo, plus account emails), then the 13
      Tonyapps emails. A **starter design** is provided for each Tonyapps email, built from today's redesigned
      templates. Phase 2 also adds the *Design visually* button and image upload.
-3. **Brand theme:** per scope, applied to new designs, Re-apply theme. Preview with real data (pick an order, cart
-   or quote).
+3. **Brand theme and real-data preview** (owner decisions 2026-11-15: one theme for the whole install; real-data
+   preview for core sales emails and all 17 Tonyapps emails):
+   - **3a Brand theme.** *Stores › Configuration › Advanced › Email Designer › Brand theme*, default scope only:
+     primary colour (buttons, links, accents; default `#1979c3`), background colour (`#f5f5f5`), font (email-safe
+     list), button corner radius (`3px`), footer text (variables allowed; default store name · store email). The
+     logo stays core's per-store email logo. A new design starts with the theme; **Apply brand theme** in the
+     editor re-applies it to an existing design (after a confirm). Saved designs never change by themselves: the
+     theme is applied in the editor and stored in the design, which remembers the theme it last got, so a
+     re-apply swaps exactly those values (colours in attributes, text and blocks; font; button radius; the
+     footer marked `ta-footer`). Starter designs and module blocks are written in the default colours, so they
+     follow the theme. Semantic colours (green "approved", red "declined"/security) are left alone.
+   - **3b Real-data preview.** The preview gets a "Sample data / real record" picker listing recent records for
+     the email (orders for sales emails, carts for AbandonedCart, shipped orders for ReviewReminder, approval
+     requests, quotes, companies, alerts…). The preview and test send then use the variables the module itself
+     sends with, so they show the real email. Each module registers a preview provider for its emails in
+     `di.xml` (`Tonyapps\EmailDesigner\Model\PreviewPool`, like blocks; duck-typed, no dependency on this
+     module): `getRecords(string $templateId, int $limit): array<string, string>` and
+     `getVariables(string $templateId, string $recordId): array`. Modules build these variables with the same
+     code their sender uses (refactored out of the sender where needed), never a copy. This module provides the
+     provider for core's order, invoice, shipment and credit memo emails (customer and guest).
+   - Safety: only admins with the designer ACL; real customer data is shown only in the admin preview and in a
+     test sent to the address the admin types. Nothing is stored.
 
 ## Architecture
 
@@ -103,6 +124,37 @@ from the visual design, and the design itself (the GrapesJS project) is kept nex
 - **`{{layout}}` blocks:** the preview shows a labelled box instead (they load the real order by ID). A test send
   renders them with the sample ID, so the items table comes out empty. Real data comes in phase 3.
 
+### Brand theme (phase 3a)
+
+- Config `tonyapps_emaildesigner/theme/{primary,background,font,radius,footer}` (`etc/adminhtml/system.xml`, tab
+  Advanced, default scope only, ACL `Tonyapps_EmailDesigner::config`; colours use the browser's colour input,
+  `Block/Adminhtml/System/Config/Color`; fonts from `Model/Config/Source/Font`). `Model/Theme::get()` validates
+  every value and falls back to `Theme::DEFAULTS`, the values starters and module blocks are written in.
+- `view/adminhtml/web/js/theme.js` (`apply(component, from, to)`, tested by `Test/Js/theme.test.js`): swaps the
+  primary colour (any case) and font stack in attributes, inline styles, text and block directives; the body
+  background and button radius only where they equal the old theme's; replaces the text of the `ta-footer`
+  footer. Colours that aren't the old primary are left alone.
+- `designer.js`: a new design gets the theme over the default; **Apply brand theme** (confirm) re-applies it;
+  blocks dropped from the panel are themed on `block:drag:stop`; the theme the design last got is saved in the
+  project JSON as `taTheme` and is the `from` of the next apply. `ta-block` cells use the theme font.
+
+### Real-data preview (phase 3b)
+
+- `Model/PreviewPool` (`providers` argument from `di.xml`, contract in its docblock: `getRecords`,
+  `getVariables`, optional `getStoreId`). The editor lists `getRecords()` in a *Sample data / record* select;
+  `Renderer::render()`/`sendTest()` take the record ID, use the provider's variables instead of sample data, the
+  record's store (`store` variable or `getStoreId()`), and leave `{{layout}}` blocks to render for real.
+- Core sales emails: `Model/Preview/SalesEmails` lists recent orders, invoices, shipments, credit memos (guest or
+  customer to match the template). Its variables come from core's own senders: `Model/Preview/Sales/*Sender`
+  subclass each core sender with `CapturesVariables`, whose `checkAndSend()` throws `CapturedVariables` with the
+  container's template vars right after they are built, so nothing is sent or saved even with a stale config;
+  `send()` is called with `$forceSyncMode = true` (the async branch would save `email_sent`). Other modules'
+  `email_*_set_template_vars_before` observers still apply.
+- Tonyapps modules register their own providers (`Model/EmailPreview` in AbandonedCart, ReviewReminder,
+  StockNotification, AdvancedReports, B2b, B2bOrderApproval, B2bQuotes, NotifyOnNewBrowserLogin), built on the
+  same variable code their senders use and read-only (placeholders where a send would create a token or coupon;
+  see each module's AGENTS.md).
+
 ### Design Visually and images (phase 2)
 
 - **Design Visually:** `Plugin/DesignVisuallyButton` (`etc/adminhtml/di.xml`), `beforeSetLayout` on
@@ -150,8 +202,9 @@ Planned in the scope but not in the schema yet:
 - On `tonyapps_email_design`: design name (the name currently lives on the `email_template` row), theme snapshot,
   created and updated by. The scope called the base-template column `orig_template_code`; it is
   `base_template_code`.
-- `tonyapps_email_theme` (phase 3): id, scope (default/website/store), scope id, logo, colours, font, button
-  style, footer HTML.
+- `tonyapps_email_theme` (planned in the scope): not built. The owner chose one theme per install (2026-11-15), so
+  it lives in configuration (`tonyapps_emaildesigner/theme/*`); the theme a design last got is stored in its
+  project JSON (`taTheme`).
 
 Rich blocks are not stored: they are registered in `di.xml` (`Tonyapps\EmailDesigner\Model\BlockPool`), keyed by
 template code. The scope also allows a group key like "all sales emails". Each block has a label, an icon, a
@@ -183,9 +236,9 @@ Scope table (approved 2026-11-11; status per row in brackets):
 | Editor | GrapesJS: canvas, blocks to drag in (sections, columns, text, image, button, divider, spacer, social links), style panel (colours, fonts, spacing, borders), undo/redo, desktop and mobile view, code view. The scope said "newsletter preset"; the build uses the `grapesjs-mjml` plugin. Assets bundled in the module (no CDN), pinned version. |
 | Magento blocks | Each inserts a directive and shows a readable placeholder in the canvas (a "Product list" box rather than raw `{{layout ...}}`); the directive is not editable as text. **Common:** store logo, store name, store address and phone [built]; *View in browser* is out of scope. **Per email:** a **Variable** block listing that email's own variables from `@vars` [built as the Insert value toolbar menu], and rich blocks registered by modules: order items table, totals, billing and shipping address, payment and shipping method (core sales emails) [built; no separate totals block, core's items layout handles render the totals]; cart items with images, subtotal, coupon, restore button, promotion block (AbandonedCart); review link (ReviewReminder); product and back-in-stock link (StockNotification); quote lines and totals (B2bQuotes); cart table (B2bOrderApproval); and so on [not built]. |
 | Starting point | A new design starts from a **starter layout** (header with logo, content, button, footer) with the email's essential blocks in place, e.g. order items and totals for an order email. No import from existing HTML templates: arbitrary template HTML does not convert reliably into editor blocks. |
-| Brand theme | One **brand theme** per store configuration: logo, primary and secondary colour, font, button style, footer text. New designs use it, and a design can **Re-apply theme**. Changing the theme does not silently restyle saved designs. [phase 3] |
+| Brand theme | One **brand theme** per store configuration: logo, primary and secondary colour, font, button style, footer text. New designs use it, and a design can **Re-apply theme**. Changing the theme does not silently restyle saved designs. [built 2026-11-15 as one theme per install, owner decision; see phase 3a] |
 | Subject | Edited in the designer (with variables), saved to the template's subject. |
-| Preview | Live preview with **sample data** per email type: a real recent order, cart, quote etc. picked by the admin [phase 3], or a generated sample when there is none [built]. Rendered through core's template filter, so it shows exactly what will be sent. Desktop and mobile widths switchable. |
+| Preview | Live preview with **sample data** per email type: a real recent order, cart, quote etc. picked by the admin [built 2026-11-15, phase 3b], or a generated sample when there is none [built]. Rendered through core's template filter, so it shows exactly what will be sent. Desktop and mobile widths switchable. |
 | Test send | **Send test** to an address (default: the admin's own, `adminEmail` in `Block/Adminhtml/Editor`), with the chosen sample data. Unsaved changes are saved first. [built] |
 | Email-client safety | **MJML** (owner decision 2026-11-11). The editor works on MJML through `grapesjs-mjml`; on save the browser compiles it with `mjml-browser` into responsive, table-based HTML with inlined CSS (Outlook, Gmail). Server needs no Node.js. Directives sit inside `mj-text` (variables) or `mj-raw` (rich blocks), which MJML passes through unchanged. |
 | Store views | Same as core: a template is global and the per-store choice happens in configuration. One design can be assigned to several store views, and a store view can use its own design. `{{trans}}` text blocks stay translatable via core translations; free text typed in the editor is per design. |
@@ -203,8 +256,13 @@ Out of scope:
 
 - Images use the default store view's media URL, so a store on another domain loads them from the default one.
 - Hand edits in core's template form are overwritten by the next designer save (the design holds the MJML).
-- `{{layout}}` blocks: labelled box in preview; empty items table in a test send (sample ID). Real data: phase 3.
-- No brand theme (phase 3).
+- `{{layout}}` blocks: labelled box in preview with sample data; with a real record they render for real.
+- Stripe's plugin on the sales email identity containers loads the admin "create order" session quote in its
+  constructor; a stale quote id there makes sales email sends (and previews) fail until the session is cleared.
+  Seen only in the integration test (`RealDataPreviewTest` clears it); not ours to fix.
+- Canvas font may only change after reopening a design when the theme's font changes (the compiled email is
+  right straight away).
+- Theme colours are swapped as exact hex values; a colour written differently (e.g. `rgb()`) is not themed.
 
 Open points recorded before code (scope stage):
 
@@ -236,6 +294,14 @@ Open points recorded before code (scope stage):
   compiles through real MJML.
 
 ## Change history
+
+- **2026-11-15** — Phase 3: brand theme (config, `Model/Theme`, `theme.js`, Apply brand theme, `taTheme` in the
+  project, `ta-footer` on the starter footer) and real-data preview (`PreviewPool`, `Preview/SalesEmails` with
+  capturing core senders, record select, `Renderer` record support; `magento/module-sales` and
+  `magento/module-config` added to `composer.json`). Tests: unit `ThemeTest`, `PreviewPoolTest`, `RendererTest`
+  (record), `StarterLayoutTest` (footer class); JS `theme.test.js`; integration `DesignControllerTest` (theme
+  config page and editor), `RealDataPreviewTest` (real order and invoice; nothing sent or saved with async on or
+  the email off); browser checks of apply/re-apply and the record select.
 
 - **2026-11-14** — *Design Visually* button on core's template edit page (`Plugin/DesignVisuallyButton`,
   `DesignRepository::findIdByTemplate`); image upload through core's media browser into `pub/media/email/`

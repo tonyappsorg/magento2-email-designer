@@ -10,6 +10,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Mail\Template\TransportBuilder;
 use PHPUnit\Framework\TestCase;
 use Tonyapps\EmailDesigner\Model\BlockPool;
+use Tonyapps\EmailDesigner\Model\PreviewPool;
 use Tonyapps\EmailDesigner\Model\Renderer;
 use Tonyapps\EmailDesigner\Model\TemplateVariables;
 
@@ -24,7 +25,8 @@ class RendererTest extends TestCase
             $this->createMock(TemplateVariables::class),
             $this->createMock(EmailConfig::class),
             $transport,
-            new BlockPool()
+            new BlockPool(),
+            new PreviewPool()
         );
 
         $this->expectException(LocalizedException::class);
@@ -42,7 +44,7 @@ class RendererTest extends TestCase
         $factory->method('create')->willReturn($template);
         $config = $this->createMock(EmailConfig::class);
         $config->method('getTemplateArea')->willReturn('frontend');
-        $renderer = new Renderer($factory, $this->createMock(TemplateVariables::class), $config, $this->createMock(TransportBuilder::class), new BlockPool());
+        $renderer = new Renderer($factory, $this->createMock(TemplateVariables::class), $config, $this->createMock(TransportBuilder::class), new BlockPool(), new PreviewPool());
 
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage('Unknown directive');
@@ -62,7 +64,7 @@ class RendererTest extends TestCase
         $config = $this->createMock(EmailConfig::class);
         $config->method('getTemplateArea')->willReturn('frontend');
         $renderer = new Renderer($factory, $this->createMock(TemplateVariables::class), $config,
-            $this->createMock(TransportBuilder::class), $pool);
+            $this->createMock(TransportBuilder::class), $pool, new PreviewPool());
 
         $html = $renderer->render('<p>{{var order.increment_id}}</p>' . $items . '{{layout handle="other"}}', 'S', 'x', 1)['html'];
 
@@ -70,5 +72,51 @@ class RendererTest extends TestCase
         self::assertStringContainsString('Order items (shown with real data in the email)', $html);
         self::assertStringContainsString('Magento block (shown with real data in the email)', $html);
         self::assertStringNotContainsString('{{layout', $html);
+    }
+
+    public function testARealRecordUsesItsVariablesAndStoreAndKeepsLayoutBlocks(): void
+    {
+        $template = $this->getMockBuilder(Template::class)->disableOriginalConstructor()
+            ->onlyMethods(['setDesignConfig', 'getProcessedTemplateSubject', 'getProcessedTemplate'])->getMock();
+        $template->expects(self::once())->method('setDesignConfig')->with(['area' => 'frontend', 'store' => 4])->willReturnSelf();
+        $template->expects(self::once())->method('getProcessedTemplate')->with(['cart' => 'real'])
+            ->willReturnCallback(fn () => $template->getTemplateText());
+        $factory = $this->createMock(TemplateFactory::class);
+        $factory->method('create')->willReturn($template);
+        $config = $this->createMock(EmailConfig::class);
+        $config->method('getTemplateArea')->willReturn('frontend');
+        $samples = $this->createMock(TemplateVariables::class);
+        $samples->expects(self::never())->method('getSampleData');
+        $provider = new class {
+            public function getRecords(string $templateId, int $limit): array
+            {
+                return [];
+            }
+
+            public function getVariables(string $templateId, string $recordId): array
+            {
+                return ['cart' => 'real'];
+            }
+
+            public function getStoreId(string $templateId, string $recordId): ?int
+            {
+                return 4;
+            }
+        };
+        $renderer = new Renderer($factory, $samples, $config, $this->createMock(TransportBuilder::class), new BlockPool(),
+            new PreviewPool(['cart' => ['templates' => ['cart_email'], 'provider' => $provider]]));
+
+        $html = $renderer->render('{{layout handle="items"}}', 'S', 'cart_email', 1, '9')['html'];
+
+        self::assertSame('{{layout handle="items"}}', $html, 'real data renders the real block');
+    }
+
+    public function testARecordForAnEmailWithoutProviderIsRefused(): void
+    {
+        $renderer = new Renderer($this->createMock(TemplateFactory::class), $this->createMock(TemplateVariables::class),
+            $this->createMock(EmailConfig::class), $this->createMock(TransportBuilder::class), new BlockPool(), new PreviewPool());
+
+        $this->expectException(\Magento\Framework\Exception\LocalizedException::class);
+        $renderer->render('<p></p>', 'S', 'unknown', 1, '9');
     }
 }

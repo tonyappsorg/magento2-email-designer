@@ -3,6 +3,13 @@
     <acl>
         <resources>
             <resource id="Magento_Backend::admin">
+                <resource id="Magento_Backend::stores">
+                    <resource id="Magento_Backend::stores_settings">
+                        <resource id="Magento_Config::config">
+                            <resource id="Tonyapps_EmailDesigner::config" title="Email Designer Brand Theme" translate="title"/>
+                        </resource>
+                    </resource>
+                </resource>
                 <resource id="Magento_Backend::marketing">
                     <resource id="Magento_Backend::marketing_communications">
                         <resource id="Tonyapps_EmailDesigner::designs" title="Email Designer" translate="title" sortOrder="15"/>

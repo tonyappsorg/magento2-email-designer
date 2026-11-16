@@ -16,6 +16,8 @@ class StarterLayoutTest extends TestCase
         // The editor script swaps this block's src for {{var logo_url}} on save (js/directives.js LOGO_CLASS).
         self::assertStringContainsString('css-class="ta-store-logo"', $mjml);
         self::assertStringContainsString('{{var store.frontend_name}}', $mjml);
+        // The brand theme replaces this footer (js/theme.js FOOTER_CLASS).
+        self::assertStringContainsString('<mj-text css-class="ta-footer"', $mjml);
         self::assertNotFalse(simplexml_load_string($mjml), 'the starter is well-formed MJML');
     }
 

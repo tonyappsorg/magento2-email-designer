@@ -38,7 +38,7 @@ class StarterLayout
     </mj-section>
     <mj-section padding="16px 24px">
       <mj-column>
-        <mj-text font-size="12px" color="#999999" align="center">{{var store.frontend_name}} · {{var store_email}}</mj-text>
+        <mj-text css-class="ta-footer" font-size="12px" color="#999999" align="center">{{var store.frontend_name}} · {{var store_email}}</mj-text>
       </mj-column>
     </mj-section>
   </mj-body>

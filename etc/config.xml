@@ -1,6 +1,15 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
     <default>
+        <tonyapps_emaildesigner>
+            <theme>
+                <primary>#1979c3</primary>
+                <background>#f5f5f5</background>
+                <font>Helvetica, Arial, sans-serif</font>
+                <radius>3</radius>
+                <footer><![CDATA[{{var store.frontend_name}} · {{var store_email}}]]></footer>
+            </theme>
+        </tonyapps_emaildesigner>
         <system>
             <media_storage_configuration>
                 <allowed_resources>

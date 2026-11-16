@@ -123,4 +123,24 @@
             </argument>
         </arguments>
     </type>
+    <!-- Real-data preview for core's sales emails. Modules add providers for their emails the same way. -->
+    <type name="Tonyapps\EmailDesigner\Model\PreviewPool">
+        <arguments>
+            <argument name="providers" xsi:type="array">
+                <item name="sales" xsi:type="array">
+                    <item name="templates" xsi:type="array">
+                        <item name="0" xsi:type="string">sales_email_order_template</item>
+                        <item name="1" xsi:type="string">sales_email_order_guest_template</item>
+                        <item name="2" xsi:type="string">sales_email_invoice_template</item>
+                        <item name="3" xsi:type="string">sales_email_invoice_guest_template</item>
+                        <item name="4" xsi:type="string">sales_email_shipment_template</item>
+                        <item name="5" xsi:type="string">sales_email_shipment_guest_template</item>
+                        <item name="6" xsi:type="string">sales_email_creditmemo_template</item>
+                        <item name="7" xsi:type="string">sales_email_creditmemo_guest_template</item>
+                    </item>
+                    <item name="provider" xsi:type="object">Tonyapps\EmailDesigner\Model\Preview\SalesEmails</item>
+                </item>
+            </argument>
+        </arguments>
+    </type>
 </config>

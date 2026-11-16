@@ -12,8 +12,10 @@ use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Framework\UrlInterface;
 use Tonyapps\EmailDesigner\Model\BlockPool;
 use Tonyapps\EmailDesigner\Model\DesignRepository;
+use Tonyapps\EmailDesigner\Model\PreviewPool;
 use Tonyapps\EmailDesigner\Model\StarterLayout;
 use Tonyapps\EmailDesigner\Model\TemplateVariables;
+use Tonyapps\EmailDesigner\Model\Theme;
 
 /** Everything the editor script needs, as one JSON config. */
 class Editor extends Template
@@ -32,6 +34,8 @@ class Editor extends Template
         private readonly Session $authSession,
         private readonly Json $json,
         private readonly BlockPool $blockPool,
+        private readonly Theme $theme,
+        private readonly PreviewPool $previewPool,
         array $data = []
     ) {
         parent::__construct($context, $data);
@@ -75,6 +79,14 @@ class Editor extends Template
             'blocks' => $this->blockPool->getFor($baseCode),
             'adminEmail' => (string)$this->authSession->getUser()?->getEmail(),
             'images' => $this->getImagesConfig(),
+            'theme' => $this->theme->get(),
+            // Recent records to preview with, newest first (a list: JS would sort numeric object keys).
+            'records' => array_map(
+                static fn (string $id, string $label): array => ['id' => $id, 'label' => $label],
+                array_map('strval', array_keys($records = $this->previewPool->getRecords($baseCode))),
+                array_values($records)
+            ),
+            'defaultTheme' => Theme::DEFAULTS,
             'urls' => [
                 'save' => $this->getUrl('*/*/save'),
                 'preview' => $this->getUrl('*/*/preview'),

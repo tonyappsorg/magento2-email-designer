@@ -35,7 +35,8 @@ class Preview extends Action implements HttpPostActionInterface
                 (string)$request->getParam('html'),
                 (string)$request->getParam('subject'),
                 (string)$request->getParam('base'),
-                (int)$this->storeManager->getDefaultStoreView()?->getId()
+                (int)$this->storeManager->getDefaultStoreView()?->getId(),
+                (string)$request->getParam('record')
             ));
         } catch (LocalizedException $exception) {
             return $result->setData(['success' => false, 'message' => $exception->getMessage()]);

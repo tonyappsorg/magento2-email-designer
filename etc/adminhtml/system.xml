@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <section id="tonyapps_emaildesigner" translate="label" sortOrder="510" showInDefault="1">
+            <label>Email Designer</label>
+            <tab>advanced</tab>
+            <resource>Tonyapps_EmailDesigner::config</resource>
+            <group id="theme" translate="label comment" sortOrder="10" showInDefault="1">
+                <label>Brand Theme</label>
+                <comment>New designs start with this theme, and "Apply brand theme" in the designer puts it on an existing design. Saved designs don't change by themselves. The logo is the email logo set per store under Content &gt; Design &gt; Configuration.</comment>
+                <field id="primary" translate="label comment" type="text" sortOrder="10" showInDefault="1">
+                    <label>Primary Colour</label>
+                    <comment>Buttons, links and accents.</comment>
+                    <frontend_model>Tonyapps\EmailDesigner\Block\Adminhtml\System\Config\Color</frontend_model>
+                </field>
+                <field id="background" translate="label" type="text" sortOrder="20" showInDefault="1">
+                    <label>Background Colour</label>
+                    <frontend_model>Tonyapps\EmailDesigner\Block\Adminhtml\System\Config\Color</frontend_model>
+                </field>
+                <field id="font" translate="label" type="select" sortOrder="30" showInDefault="1">
+                    <label>Font</label>
+                    <source_model>Tonyapps\EmailDesigner\Model\Config\Source\Font</source_model>
+                </field>
+                <field id="radius" translate="label comment" type="text" sortOrder="40" showInDefault="1">
+                    <label>Button Corner Radius (px)</label>
+                    <comment>0 for square buttons.</comment>
+                    <validate>validate-digits validate-digits-range digits-range-0-40</validate>
+                </field>
+                <field id="footer" translate="label comment" type="text" sortOrder="50" showInDefault="1">
+                    <label>Footer Text</label>
+                    <comment><![CDATA[Plain text; variables such as {{var store.frontend_name}} and {{var store_email}} work.]]></comment>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

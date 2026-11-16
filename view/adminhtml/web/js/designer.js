@@ -5,11 +5,12 @@ define([
     'grapesjs',
     'grapesjs-mjml',
     'Tonyapps_EmailDesigner/js/directives',
+    'Tonyapps_EmailDesigner/js/theme',
     'Magento_Ui/js/modal/alert',
     'Magento_Ui/js/modal/confirm',
     'Magento_Ui/js/modal/prompt',
     'Magento_Ui/js/modal/modal'
-], function ($, _, $t, grapesjs, grapesjsMjml, directives, alert, confirm, prompt, modal) {
+], function ($, _, $t, grapesjs, grapesjsMjml, directives, theme, alert, confirm, prompt, modal) {
     'use strict';
 
     var mjmlPlugin = grapesjsMjml.default || grapesjsMjml,
@@ -94,7 +95,8 @@ define([
                 },
                 toHTML: function () {
                     return '<mj-raw><tr><td style="padding:10px 25px;font-size:14px;line-height:1.6;color:#333333;'
-                        + 'font-family:Helvetica, Arial, sans-serif;">' + this.get('taDirective') + '</td></tr></mj-raw>';
+                        + 'font-family:' + _.escape(config.appliedTheme.font) + ';">' + this.get('taDirective')
+                        + '</td></tr></mj-raw>';
                 }
             },
             view: {
@@ -196,6 +198,7 @@ define([
             $subject = $root.find('[data-role=subject]').val(config.subject),
             $versions = $root.find('[data-role=versions]'),
             dirty = false,
+            $record,
             editor;
 
         $root.find('[data-role=for]').text($t('Design for: %1').replace('%1', config.baseLabel));
@@ -214,15 +217,32 @@ define([
                 addBlockType(ed, config);
             }]
         });
+        // The theme the design last got; starters and blocks are written in the default theme.
+        config.appliedTheme = (config.project && config.project.taTheme) || config.defaultTheme;
         if (config.project) {
             editor.loadProjectData(config.project);
         } else {
             editor.setComponents(config.starter);
+            applyTheme(config.theme);
         }
         addMagentoBlocks(editor, config);
         addEmailBlocks(editor, config);
         addVariableAction(editor, config.variables);
         addMediaGallery(editor, config.images);
+
+        // Blocks from the panel are in the default theme too.
+        editor.on('block:drag:stop', function (result) {
+            _.each([].concat(result || []), function (component) {
+                if (component && component.get) {
+                    theme.apply(component, config.defaultTheme, config.appliedTheme);
+                }
+            });
+        });
+
+        function applyTheme(next) {
+            theme.apply(editor.getWrapper(), config.appliedTheme, next);
+            config.appliedTheme = next;
+        }
 
         editor.on('update', function () {
             dirty = true;
@@ -248,6 +268,14 @@ define([
         }
         renderVersions(config.versions || []);
 
+        // Preview and test send use sample data or a real record (an order, a cart, a quote…).
+        $record = $root.find('[data-role=record]');
+        $record.append($('<option>', {value: '', text: $t('Sample data')}));
+        _.each(config.records || [], function (record) {
+            $record.append($('<option>', {value: record.id, text: record.label}));
+        });
+        $record.toggle((config.records || []).length > 0);
+
         /** MJML → email HTML, with Magento directives kept intact. */
         function compile() {
             var mjml = directives.useStoreLogo(editor.runCommand('mjml-code')),
@@ -265,7 +293,7 @@ define([
                 name: $name.val(),
                 base: config.base,
                 subject: $subject.val(),
-                project: JSON.stringify(editor.getProjectData()),
+                project: JSON.stringify($.extend(editor.getProjectData(), {taTheme: config.appliedTheme})),
                 mjml: compiled.mjml,
                 html: compiled.html
             }).then(function (response) {
@@ -310,8 +338,21 @@ define([
 
         $root.find('[data-role=save]').on('click', save);
 
+        $root.find('[data-role=theme]').on('click', function () {
+            confirm({
+                title: $t('Apply brand theme'),
+                content: $t('Use the brand theme from Stores > Configuration > Advanced > Email Designer: colours, font, button corners and footer. Colours you set yourself, such as a green or red button, stay. Save afterwards to keep it.'),
+                actions: {
+                    confirm: function () {
+                        applyTheme(config.theme);
+                        dirty = true;
+                    }
+                }
+            });
+        });
+
         $root.find('[data-role=preview]').on('click', function () {
-            post(config.urls.preview, {html: compile().html, subject: $subject.val(), base: config.base})
+            post(config.urls.preview, {html: compile().html, subject: $subject.val(), base: config.base, record: $record.val() || ''})
                 .done(function (response) {
                     response.success ? showPreview(response) : fail(response.message);
                 })
@@ -330,7 +371,7 @@ define([
                         var ready = dirty || !config.id ? save() : $.Deferred().resolve();
 
                         ready.then(function () {
-                            return post(config.urls.sendTest, {id: config.id, email: email});
+                            return post(config.urls.sendTest, {id: config.id, email: email, record: $record.val() || ''});
                         }).done(function (response) {
                             if (response) {
                                 alert({title: $t('Email Designer'), content: _.escape(response.message)});

@@ -37,7 +37,8 @@ class SendTest extends Action implements HttpPostActionInterface
                 (int)$design['template_id'],
                 (string)$design['base_template_code'],
                 $email,
-                (int)$this->storeManager->getDefaultStoreView()?->getId()
+                (int)$this->storeManager->getDefaultStoreView()?->getId(),
+                (string)$this->getRequest()->getParam('record')
             );
             return $result->setData(['success' => true, 'message' => (string)__('Test email sent to %1.', $email)]);
         } catch (\Exception $exception) {
