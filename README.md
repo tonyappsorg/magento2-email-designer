@@ -93,3 +93,7 @@ bin/magento setup:upgrade
 
 Architecture, decisions, data model and tests are in [AGENTS.md](AGENTS.md). Third-party licences are in
 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+
+## License
+
+Free and open source under the [GNU General Public License v3.0 or later](LICENSE). Bundled third-party libraries keep their own licences, listed in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).

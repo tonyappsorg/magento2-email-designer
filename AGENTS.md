@@ -273,8 +273,8 @@ Open points recorded before code (scope stage):
 - **Loops:** Magento's `{{for}}` loops (e.g. the AbandonedCart items) are placed only as whole rich blocks, not
   built in the editor, so a design cannot break a loop's markup. → Implemented by the locked `ta-block` type.
 - **Licences:** GrapesJS is BSD-3 and `grapesjs-mjml` and MJML are MIT. Their notices must ship with the module
-  and appear in the Composer package metadata. → Notices ship in `THIRD-PARTY-NOTICES.md`; `composer.json` still
-  only says `"license": "proprietary"` (Composer metadata part open).
+  and appear in the Composer package metadata. → Notices ship in `THIRD-PARTY-NOTICES.md`; the module itself
+  is GPL-3.0-or-later since 2026-11-16 (BSD-3 and MIT are GPL-compatible).
 
 ## Tests
 
@@ -295,6 +295,8 @@ Open points recorded before code (scope stage):
 
 ## Change history
 
+- **2026-11-16** — Released as free software under GPL-3.0-or-later (owner decision): `LICENSE` added,
+  `composer.json` license changed from `proprietary`, License section in the README.
 - **2026-11-16** — Fix: `BlockPool`'s constructor had `ComponentRegistrar $componentRegistrar = new
   ComponentRegistrar()`. `setup:di:compile` writes that default into `generated/metadata` as
   `ComponentRegistrar::__set_state()`, so every request on a compiled (production) install fatalled, with or
