@@ -25,7 +25,7 @@ class RendererTest extends TestCase
             $this->createMock(TemplateVariables::class),
             $this->createMock(EmailConfig::class),
             $transport,
-            new BlockPool(),
+            new BlockPool(new \Magento\Framework\Component\ComponentRegistrar()),
             new PreviewPool()
         );
 
@@ -44,7 +44,7 @@ class RendererTest extends TestCase
         $factory->method('create')->willReturn($template);
         $config = $this->createMock(EmailConfig::class);
         $config->method('getTemplateArea')->willReturn('frontend');
-        $renderer = new Renderer($factory, $this->createMock(TemplateVariables::class), $config, $this->createMock(TransportBuilder::class), new BlockPool(), new PreviewPool());
+        $renderer = new Renderer($factory, $this->createMock(TemplateVariables::class), $config, $this->createMock(TransportBuilder::class), new BlockPool(new \Magento\Framework\Component\ComponentRegistrar()), new PreviewPool());
 
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage('Unknown directive');
@@ -60,7 +60,7 @@ class RendererTest extends TestCase
         $factory = $this->createMock(TemplateFactory::class);
         $factory->method('create')->willReturn($template);
         $items = '{{layout handle="sales_email_order_items" order_id=$order_id area="frontend"}}';
-        $pool = new BlockPool(['items' => ['label' => 'Order items', 'templates' => [], 'directive' => $items]]);
+        $pool = new BlockPool(new \Magento\Framework\Component\ComponentRegistrar(), ['items' => ['label' => 'Order items', 'templates' => [], 'directive' => $items]]);
         $config = $this->createMock(EmailConfig::class);
         $config->method('getTemplateArea')->willReturn('frontend');
         $renderer = new Renderer($factory, $this->createMock(TemplateVariables::class), $config,
@@ -103,7 +103,7 @@ class RendererTest extends TestCase
                 return 4;
             }
         };
-        $renderer = new Renderer($factory, $samples, $config, $this->createMock(TransportBuilder::class), new BlockPool(),
+        $renderer = new Renderer($factory, $samples, $config, $this->createMock(TransportBuilder::class), new BlockPool(new \Magento\Framework\Component\ComponentRegistrar()),
             new PreviewPool(['cart' => ['templates' => ['cart_email'], 'provider' => $provider]]));
 
         $html = $renderer->render('{{layout handle="items"}}', 'S', 'cart_email', 1, '9')['html'];
@@ -114,7 +114,7 @@ class RendererTest extends TestCase
     public function testARecordForAnEmailWithoutProviderIsRefused(): void
     {
         $renderer = new Renderer($this->createMock(TemplateFactory::class), $this->createMock(TemplateVariables::class),
-            $this->createMock(EmailConfig::class), $this->createMock(TransportBuilder::class), new BlockPool(), new PreviewPool());
+            $this->createMock(EmailConfig::class), $this->createMock(TransportBuilder::class), new BlockPool(new \Magento\Framework\Component\ComponentRegistrar()), new PreviewPool());
 
         $this->expectException(\Magento\Framework\Exception\LocalizedException::class);
         $renderer->render('<p></p>', 'S', 'unknown', 1, '9');

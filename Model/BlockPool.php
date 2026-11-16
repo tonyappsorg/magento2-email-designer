@@ -34,9 +34,11 @@ class BlockPool
      * @param array<string, string> $starters email template ID => "Vendor_Module::path/file.mjml"
      */
     public function __construct(
+        // Required, never `= new ComponentRegistrar()`: setup:di:compile writes such a default into
+        // generated/metadata as ComponentRegistrar::__set_state(), which fatals every request in production mode.
+        private readonly ComponentRegistrar $componentRegistrar,
         private readonly array $blocks = [],
-        private readonly array $starters = [],
-        private readonly ComponentRegistrar $componentRegistrar = new ComponentRegistrar()
+        private readonly array $starters = []
     ) {
     }
 

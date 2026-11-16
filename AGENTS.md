@@ -295,6 +295,12 @@ Open points recorded before code (scope stage):
 
 ## Change history
 
+- **2026-11-16** — Fix: `BlockPool`'s constructor had `ComponentRegistrar $componentRegistrar = new
+  ComponentRegistrar()`. `setup:di:compile` writes that default into `generated/metadata` as
+  `ComponentRegistrar::__set_state()`, so every request on a compiled (production) install fatalled, with or
+  without this module enabled (compile scans all of `app/code`). The registrar is now a required first argument.
+  `BlockPoolTest` checks that no constructor in the module has an object default. Found by compiling with the
+  module disabled; developer mode never compiles, so the earlier tests missed it.
 - **2026-11-15** — Phase 3: brand theme (config, `Model/Theme`, `theme.js`, Apply brand theme, `taTheme` in the
   project, `ta-footer` on the starter footer) and real-data preview (`PreviewPool`, `Preview/SalesEmails` with
   capturing core senders, record select, `Renderer` record support; `magento/module-sales` and
