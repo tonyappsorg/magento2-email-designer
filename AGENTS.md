@@ -4,7 +4,7 @@ Read this before changing the module. Workspace-wide rules are in ../AGENTS.md.
 
 A drag-and-drop email designer in the Magento admin. Store staff build or restyle transactional emails visually
 (Tonyapps modules and core Magento: orders, invoices, shipments, accounts) instead of editing template HTML.
-Package `tonyapps/module-email-designer` 0.1.0.
+Package `tonyapps/module-email-designer` 1.0.0.
 
 ## Status
 
