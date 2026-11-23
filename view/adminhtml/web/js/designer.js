@@ -270,7 +270,7 @@ define([
 
         // Preview and test send use sample data or a real record (an order, a cart, a quote…).
         $record = $root.find('[data-role=record]');
-        $record.append($('<option>', {value: '', text: $t('Sample data')}));
+        $record.append($('<option>', {value: '', text: $t('Sample data (placeholders)')}));
         _.each(config.records || [], function (record) {
             $record.append($('<option>', {value: record.id, text: record.label}));
         });
@@ -282,7 +282,7 @@ define([
                 guarded = directives.protect(mjml),
                 result = editor.runCommand('mjml-code-to-html', {mjml: guarded.mjml});
 
-            return {mjml: mjml, html: directives.restore(result.html || '', guarded.saved)};
+            return {mjml: mjml, html: directives.avoidSmtpDotStuffing(directives.restore(result.html || '', guarded.saved))};
         }
 
         function save() {
@@ -326,7 +326,7 @@ define([
             $content.append($frame);
             $frame.attr('srcdoc', rendered.html);
             modal({
-                title: $t('Preview with sample data'),
+                title: $record.val() ? $t('Preview with selected record') : $t('Preview with sample data'),
                 type: 'slide',
                 buttons: [],
                 closed: function () {
@@ -362,9 +362,19 @@ define([
         });
 
         $root.find('[data-role=send-test]').on('click', function () {
+            if (!$record.val() && directives.needsRecordForTest(editor.runCommand('mjml-code'))) {
+                alert({
+                    title: $t('Choose a record for this test'),
+                    content: $t('This design contains Magento blocks that need a real record. Select a recent order or other record in the Preview and test with list, then send the test again.')
+                });
+                return;
+            }
             prompt({
                 title: $t('Send a test email'),
-                content: $t('The saved design is sent with sample data. Unsaved changes are saved first.'),
+                content: $record.val()
+                    ? $t('The saved design will be sent with data from the selected record (%1). Unsaved changes are saved first.')
+                        .replace('%1', _.escape($record.find('option:selected').text()))
+                    : $t('The saved design will be sent with placeholder values. Unsaved changes are saved first.'),
                 value: config.adminEmail,
                 actions: {
                     confirm: function (email) {

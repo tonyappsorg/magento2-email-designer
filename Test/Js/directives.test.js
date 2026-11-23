@@ -19,6 +19,20 @@ var source = '<mjml><mj-body><mj-section><mj-column>'
 var withLogo = directives.useStoreLogo(source);
 assert.ok(withLogo.indexOf('src="{{var logo_url}}"') !== -1, 'the logo block gets the logo variable');
 assert.ok(withLogo.indexOf('banner.png') !== -1, 'other images keep their source');
+assert.strictEqual(directives.needsRecordForTest('<mj-raw>{{layout handle="sales_email_order_items" order_id=$order_id}}</mj-raw>'), true,
+    'a sales items block needs a real record for a complete test email');
+assert.strictEqual(directives.needsRecordForTest('<mj-text>Hello {{var customer.name}}</mj-text>'), false,
+    'a design with only variables can use sample values');
+assert.strictEqual(directives.needsRecordForTest('<mj-text>{{layoutNote}}</mj-text>'), false,
+    'only layout directives require a real record');
+
+var cssHtml = '<style type="text/css">\n.email-items { width:100%; }\r\n.email-items th { padding:8px; }'
+    + '\n  .already-indented { color:#333; }\n</style><p>\n.content stays untouched</p>';
+var safeCssHtml = directives.avoidSmtpDotStuffing(cssHtml);
+assert.ok(safeCssHtml.includes('\n .email-items { width:100%; }'), 'a leading class selector gets a safe prefix');
+assert.ok(safeCssHtml.includes('\r\n .email-items th { padding:8px; }'), 'CRLF style lines are handled');
+assert.ok(safeCssHtml.includes('\n  .already-indented { color:#333; }'), 'existing indentation stays');
+assert.ok(safeCssHtml.includes('<p>\n.content stays untouched</p>'), 'email body text is unchanged');
 
 var protectedMjml = directives.protect(withLogo);
 assert.strictEqual(protectedMjml.mjml.indexOf('{{'), -1, 'no directive reaches the compiler');

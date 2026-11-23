@@ -36,6 +36,18 @@
             });
         },
 
+        /** Magento layout blocks need a real record; sample variables cannot fill them for a test email. */
+        needsRecordForTest: function (mjml) {
+            return /\{\{layout\b/.test(mjml);
+        },
+
+        /** A CSS line starting with a dot can arrive as two dots after SMTP dot-stuffing. */
+        avoidSmtpDotStuffing: function (html) {
+            return html.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, function (block) {
+                return block.replace(/(^|\n)\./g, '$1 .');
+            });
+        },
+
         protect: function (mjml) {
             var saved = [];
 

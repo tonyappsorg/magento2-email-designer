@@ -55,8 +55,9 @@ Magento processes the template like any other.
 
 ## Good to know
 
-- With sample data, lists such as cart items show one sample row, and core sales items tables show as labelled
-  boxes (empty in a test send). Pick a real record to see them filled in.
+- Sample data uses placeholders such as `[Customer Name]`. Lists such as cart items show one sample row in the
+  preview. Magento layout blocks, including core sales items tables, need a real record; the designer asks you to
+  select one before sending a test of a design that contains them.
 - The brand theme is one for the whole store installation; the logo is each store's own email logo. Changing the
   theme doesn't restyle saved designs until you apply it in the designer and save.
 - A real-data preview shows customer data to the admin, and a test with it goes only to the address you type.

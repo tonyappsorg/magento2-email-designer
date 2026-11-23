@@ -104,6 +104,9 @@ from the visual design, and the design itself (the GrapesJS project) is kept nex
 - **Protecting directives:** MJML breaks attribute values that contain quotes, e.g. `href="{{store url="..."}}"`.
   Before compiling, `directives.js` swaps every `{{...}}` directive for a plain token and decodes it. After
   compiling, it restores the directives.
+- **CSS lines in sent email:** `directives.js` prefixes a space to CSS selectors that start with `.` at the start
+  of a line inside a `<style>` tag. SMTP dot-stuffing doubled the first `.email-items` selector in a demo order
+  email, leaving the order table narrow in Mailpit. The space preserves the selector and its intended width.
 - **Logo:** the *Store logo* block shows the default email logo in the editor. On save it becomes
   `{{var logo_url}}`, so each store sends its own logo.
 
@@ -121,8 +124,9 @@ from the visual design, and the design itself (the GrapesJS project) is kept nex
   in the design gets one sample row whose fields are named after what the loop reads (`{{var item.name}}` →
   `[name]`); for a test send the loops are read from the saved template.
 - **Variables core fills itself:** `store`, `logo_url` and so on keep their real values.
-- **`{{layout}}` blocks:** the preview shows a labelled box instead (they load the real order by ID). A test send
-  renders them with the sample ID, so the items table comes out empty. Real data comes in phase 3.
+- **`{{layout}}` blocks:** the sample preview shows a labelled box instead (they load a real order or another
+  record by ID). Since a sample test email would contain an empty table, the editor asks for a real record before
+  sending a design with a `{{layout}}` block. The test prompt names the selected record.
 
 ### Brand theme (phase 3a)
 
@@ -295,6 +299,10 @@ Open points recorded before code (scope stage):
 
 ## Change history
 
+- **2026-11-23** — Sample test sends with Magento `{{layout}}` blocks are stopped in the editor with a prompt
+  to choose a recent record. The record picker identifies sample values as placeholders, and the preview and
+  send-test dialogs describe the selected mode. CSS class selectors at the start of a `<style>` line get a safe
+  prefix before saving so SMTP dot-stuffing cannot break their rules. `directives.test.js` covers both cases.
 - **2026-11-16** — Released as free software under GPL-3.0-or-later (owner decision): `LICENSE` added,
   `composer.json` license changed from `proprietary`, License section in the README.
 - **2026-11-16** — Fix: `BlockPool`'s constructor had `ComponentRegistrar $componentRegistrar = new
